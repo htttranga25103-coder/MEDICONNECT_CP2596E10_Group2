@@ -7,7 +7,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <title>Login MediConnect</title>
-    <link rel = "stylesheet" href = "../assets/css/style.css">
+    <link rel = "stylesheet" href = "../assets/css/auth_style.css">
 </head>
 <body>
     <div class="login-card">
