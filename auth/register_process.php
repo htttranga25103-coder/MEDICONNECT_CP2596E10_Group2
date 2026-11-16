@@ -5,8 +5,7 @@ if($_SERVER['REQUEST_METHOD']=== 'POST'){
     $fullName = trim($_POST['full_name']);
     $email = trim($_POST['email']);
     if(!filter_var($email, FILTER_VALIDATE_EMAIL)|| strpos($email, '@') === false || strpos($email, '.')===false){
-        $_SESSION['error'] = "email format is incorrect!"
-        header("Location: login.php")
+        $_SESSION['error'] = "email format is incorrect!";
         }   
     $password = $_POST['password'];
     $phoneNumber = trim($_POST['phone_number']);
