@@ -9,7 +9,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $stmt = $pdo->prepare("
         SELECT u.*, r.role_name
         FROM users u
-        JOIN roles r ON u.role_id = r.rolr_id
+        JOIN roles r ON u.role_id = r.role_id
         WHERE u.email = ? AND u.is_active = 1
     ");
     $stmt->execute([$email]);
