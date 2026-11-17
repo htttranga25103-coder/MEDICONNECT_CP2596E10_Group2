@@ -58,6 +58,10 @@ session_start();
 
             <button type="submit">Login</button>
         </form>
+        <p style="text-align: center; margin-top:20px; font-size:14px;">
+            Don't have an account? <a href="register.php" style="color: #00b074; font-weght:bold; text-decoration: none;">Create an account</a>
+        </p>
+
     </div>
 </body>
 </html>

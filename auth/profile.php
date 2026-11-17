@@ -33,8 +33,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])){
         $newHash = password_hash($newPass, PASSWORD_DEFAULT);
         $updateStmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
         $updateStmt->execute([$newHash, $userId]);
-        $message = "Password changed successfully!"
-    }else {
+        $message = "Password changed successfully!";
+    }else{
         $message="Password changed failed!";
     }
 }

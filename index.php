@@ -1,5 +1,5 @@
 <?php
-// Bật hiển thị lỗi để dễ dàng kiểm tra
+// hiển thị lỗi để dễ dàng kiểm tra
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -8,7 +8,7 @@ session_start();
 require_once 'config/database.php';
 
 try {
-    // Đã sửa lại u.user_id cho chính xác tuyệt đối
+    //u.user_id chính xác tuyệt đối
     $stmt = $pdo->query("
         SELECT a.*, ac.name as category_name, u.full_name as author_name
         FROM articles a
@@ -27,11 +27,11 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediConnect - Trang chủ</title>
-    <!-- Gọi file CSS chung từ thư mục assets -->
+    <title>Home</title>
+    <!-- Gọi file CSS chung từ assets -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* Bổ sung một vài định dạng riêng cho trang chủ */
+   <!-- thêm phụ để ghép vào nhóm có the xóa -->
+   <style> 
         body { display: block; background-color: #f4f6f9; padding: 20px; }
         .main-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 15px; margin-bottom: 20px; }
@@ -49,16 +49,15 @@ try {
             <h1>MediConnect</h1>
             <div>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <span>Xin chào, <strong><?php echo htmlspecialchars($_SESSION['full_name']); ?></strong>!</span>
-                    <a href="auth/logout.php" class="btn-auth" style="background: #dc3545;">Đăng xuất</a>
+                    <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name']); ?></strong>!</span>
+                    <a href="auth/logout.php" class="btn-auth" style="background: #dc3545;">Log out</a>
                 <?php else: ?>
-                    <a href="auth/login.php" class="btn-auth">Đăng nhập</a>
+                    <a href="auth/login.php" class="btn-auth">Log in</a>
                 <?php endif; ?>
             </div>
         </div>
 
-        <h2>Bài viết y tế nổi bật</h2>
-        
+        <h2>Featured Medical Article</h2>
         <?php if (!empty($articles)): ?>
             <?php foreach ($articles as $art): ?>
                 <div class="article-card">
@@ -66,15 +65,15 @@ try {
                         <?php echo htmlspecialchars($art['title']); ?>
                     </a>
                     <div class="meta-info">
-                        Danh mục: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'Chung'); ?></strong> | 
-                        Tác giả: <?php echo htmlspecialchars($art['author_name']); ?> | 
-                        Ngày đăng: <?php echo $art['created_at']; ?>
+                        Category: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'General'); ?></strong> | 
+                        Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
+                        Date Published: <?php echo $art['created_at']; ?>
                     </div>
                     <p><?php echo htmlspecialchars($art['summary']); ?></p>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <p style="color: #666; font-style: italic;">Chưa có bài viết nào trong cơ sở dữ liệu.</p>
+            <p style="color: #666; font-style: italic;">No articles found in the database</p>
         <?php endif; ?>
     </div>
 </body>
