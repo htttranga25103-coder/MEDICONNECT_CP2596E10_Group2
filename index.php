@@ -1,5 +1,5 @@
 <?php
-// hiển thị lỗi để dễ dàng kiểm tra
+// Hiển thị lỗi để dễ dàng kiểm tra trong quá trình phát triển
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -8,7 +8,7 @@ session_start();
 require_once 'config/database.php';
 
 try {
-    //u.user_id chính xác tuyệt đối
+    // Truy vấn lấy danh sách 5 bài viết mới nhất kèm theo tên danh mục và tên tác giả
     $stmt = $pdo->query("
         SELECT a.*, ac.name as category_name, u.full_name as author_name
         FROM articles a
@@ -27,37 +27,46 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <!-- Gọi file CSS chung từ assets -->
+    <title>Home - MediConnect</title>
+    <!-- Gọi file CSS chung từ thư mục assets -->
     <link rel="stylesheet" href="assets/css/style.css">
-   <!-- thêm phụ để ghép vào nhóm có the xóa -->
-   <style> 
-        body { display: block; background-color: #f4f6f9; padding: 20px; }
+    <style> 
+        body { display: block; background-color: #f4f6f9; padding: 20px; font-family: Arial, sans-serif; }
         .main-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 15px; margin-bottom: 20px; }
+        .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00b074; padding-bottom: 15px; margin-bottom: 20px; }
         .article-card { border-bottom: 1px solid #eee; padding: 15px 0; }
         .article-card:last-child { border-bottom: none; }
-        .article-title { color: #007bff; text-decoration: none; font-size: 18px; font-weight: bold; }
+        .article-title { color: #00b074; text-decoration: none; font-size: 18px; font-weight: bold; }
         .article-title:hover { text-decoration: underline; }
         .meta-info { font-size: 13px; color: #666; margin-top: 5px; }
-        .btn-auth { background: #007bff; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; }
+        .btn-auth { background: #00b074; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="header-nav">
-            <h1>MediConnect</h1>
+            <h1 style="color: #00b074; margin: 0;">MediConnect</h1>
             <div>
+                <!-- sang trang danh sách đầy đủ articles/news.php -->
+                <a href="articles/news.php" style="margin-right: 15px; text-decoration: none; color: #00b074; font-weight: bold;">View all articles</a>
+
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name']); ?></strong>!</span>
-                    <a href="auth/logout.php" class="btn-auth" style="background: #dc3545;">Log out</a>
+                    <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? ''); ?></strong>!</span>
+                    
+                    <?php if (in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])): ?>
+                        <a href="articles/manage.php" class="btn-auth" style="background: #ffc107; color: #333;">Quản lý</a>
+                    <?php endif; ?>
+
+                    <a href="auth/logout.php" class="btn-auth" style="background: #00b074;">Log out</a>
                 <?php else: ?>
                     <a href="auth/login.php" class="btn-auth">Log in</a>
                 <?php endif; ?>
             </div>
         </div>
 
-        <h2>Featured Medical Article</h2>
+        <!-- PHẦN HIỂN THỊ BÀI VIẾT NỔI BẬT TRÊN TRANG CHỦ -->
+        <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
+        
         <?php if (!empty($articles)): ?>
             <?php foreach ($articles as $art): ?>
                 <div class="article-card">
@@ -69,7 +78,7 @@ try {
                         Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
                         Date Published: <?php echo $art['created_at']; ?>
                     </div>
-                    <p><?php echo htmlspecialchars($art['summary']); ?></p>
+                    <p style="color: #444; margin-top: 8px;"><?php echo htmlspecialchars($art['summary'] ?? ''); ?></p>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
