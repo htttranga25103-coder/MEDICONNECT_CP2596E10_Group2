@@ -83,7 +83,6 @@ input:focus {
     outline: none;
 }
 
-/* Kiểu dáng cho nhóm lựa chọn Role dạng thẻ bo tròn */
 .role-container {
     display: flex;
     gap: 10px;

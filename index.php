@@ -55,7 +55,8 @@ try {
                     
                     <?php if (in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])): ?>
                         <a href="articles/manage.php" class="btn-auth" style="background: #ffc107; color: #333;">Quản lý</a>
-                    <?php endif; ?>
+                        <a href="articles/crawl_articles.php" class="btn-auth" style="background: #17a2b8; color: white;">Articles update auto</a>
+                        <?php endif; ?>
 
                     <a href="auth/logout.php" class="btn-auth" style="background: #00b074;">Log out</a>
                 <?php else: ?>

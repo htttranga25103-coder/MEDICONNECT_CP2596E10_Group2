@@ -1,0 +1,97 @@
+/* --- CSS Chung cho các trang thuộc module Articles (MediConnect) --- */
+body {
+    display: block;
+    background-color: #f4f6f9;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.main-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #00b074;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.article-card {
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+}
+
+.article-card:last-child {
+    border-bottom: none;
+}
+
+.article-title {
+    color: #00b074;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.article-title:hover {
+    text-decoration: underline;
+}
+
+.meta-info {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.btn-auth {
+    background: #00b074;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+/* Form và các thành phần trong quản lý/chi tiết */
+.form-group-custom {
+    margin-bottom: 15px;
+}
+
+.form-group-custom label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group-custom input[type="text"],
+.form-group-custom select,
+.form-group-custom textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn-submit {
+    background: #00b074;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-submit:hover {
+    background: #009562;
+}

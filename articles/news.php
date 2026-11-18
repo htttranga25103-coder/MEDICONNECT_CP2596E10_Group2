@@ -61,7 +61,7 @@ try {
         </div>
 
         <!-- Nằm ngoài header-nav để thêm test bố cục -->
-        <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
+       <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
         
         <?php if (!empty($articles)): ?>
             <?php foreach ($articles as $art): ?>
