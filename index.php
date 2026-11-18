@@ -64,7 +64,7 @@ try {
             </div>
         </div>
 
-        <!-- PHẦN HIỂN THỊ BÀI VIẾT NỔI BẬT TRÊN TRANG CHỦ -->
+        <!-- bài viet noi bat -->
         <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
         
         <?php if (!empty($articles)): ?>

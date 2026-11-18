@@ -53,7 +53,7 @@ try {
                 <a href="../index.php" style="margin-right: 15px; text-decoration: none; color: #00b074; font-weight: bold;">Home</a>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? ''); ?></strong>!</span>
-                    <a href="../auth/logout.php" class="btn-auth" style="background: #dc3545;">Log out</a>
+                    <a href="../auth/logout.php" class="btn-auth" style="background: #00b074;">Log out</a>
                 <?php else: ?>
                     <a href="../auth/login.php" class="btn-auth">Log in</a>
                 <?php endif; ?>
