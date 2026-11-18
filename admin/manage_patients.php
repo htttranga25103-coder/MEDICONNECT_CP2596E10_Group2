@@ -2,8 +2,6 @@
 session_start();
 require_once '../config/MyConnection.php';
 require_once '../models/PatientManager.php';
-
-// Kiểm tra quyền ADMIN
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'ADMIN') {
     header("Location: ../login.php");
     exit();
@@ -11,8 +9,6 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'ADMIN') {
 
 $conn = MyConnection::connectDatabase();
 $patientManager = new PatientManager($conn);
-
-// Xử lý Form Thêm - Sửa - Xóa
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $result = null;
@@ -32,8 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header("Location: manage_patients.php");
     exit();
 }
-
-// Lấy dữ liệu hiển thị
 $addressData = $patientManager->getAddressOptions();
 $cities = $addressData['cities'];
 $districts = $addressData['districts'];
@@ -53,7 +47,6 @@ $patients = $patientManager->getPatients($keyword);
 <body>
 
 <div class="admin-wrapper">
-    <!-- SIDEBAR BÊN TRÁI -->
     <aside class="sidebar">
         <a href="dashboard.php" class="sidebar-brand">MediConnect</a>
         <ul class="sidebar-menu">
@@ -76,8 +69,6 @@ $patients = $patientManager->getPatients($keyword);
 
         <main class="content-container">
             <h2 class="page-title">Patient Management</h2>
-
-            <!-- Thông báo kết quả thao tác -->
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert-box alert-success">
                     <span><?= htmlspecialchars($_SESSION['success']) ?></span>
@@ -93,15 +84,12 @@ $patients = $patientManager->getPatients($keyword);
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
-
-            <!-- FORM DUY NHẤT CHO THÊM - SỬA - XÓA -->
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title" id="form_header">Add New Patient</span>
                 </div>
 
                 <form method="POST" action="manage_patients.php" id="patientForm">
-                    <!-- Các trường ẩn điều khiển trạng thái Form -->
                     <input type="hidden" name="action" id="form_action" value="add">
                     <input type="hidden" name="patient_id" id="patient_id" value="">
                     <input type="hidden" name="user_id" id="user_id" value="">
@@ -186,7 +174,6 @@ $patients = $patientManager->getPatients($keyword);
                         </div>
                     </div>
 
-                    <!-- Các nút thao tác của Form -->
                     <div class="form-actions">
                         <button type="submit" class="btn-mc btn-mc-teal" id="btn_submit">
                             Add Patient
@@ -201,7 +188,6 @@ $patients = $patientManager->getPatients($keyword);
                 </form>
             </div>
 
-            <!-- DANH SÁCH BỆNH NHÂN -->
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">Patient List (<?= count($patients) ?>)</span>
@@ -232,7 +218,6 @@ $patients = $patientManager->getPatients($keyword);
                             <?php if (count($patients) > 0): ?>
                                 <?php foreach ($patients as $row): ?>
                                     <?php
-                                        // Ghép chuỗi địa chỉ đầy đủ
                                         $addrParts = array_filter([$row['address'], $row['street_name'], $row['district_name'], $row['city_name']]);
                                         $fullAddress = !empty($addrParts) ? implode(', ', $addrParts) : '<span class="text-muted-italic">Not updated</span>';
                                     ?>
@@ -254,13 +239,11 @@ $patients = $patientManager->getPatients($keyword);
                                                 : '<span class="badge-pill badge-locked">Locked</span>' ?>
                                         </td>
                                         <td class="action-cell">
-                                            <!-- Sửa  -->
                                             <button type="button" class="btn-mc btn-mc-teal"
                                                     onclick='editPatient(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>)'>
                                                 Edit
                                             </button>
 
-                                            <!-- Xóa -->
                                             <button type="button" class="btn-mc btn-mc-danger"
                                                     onclick="deletePatient(<?= $row['patient_id'] ?>, '<?= htmlspecialchars(addslashes($row['full_name'])) ?>')">
                                                 Delete
@@ -302,8 +285,6 @@ $patients = $patientManager->getPatients($keyword);
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const passwordLabel = document.getElementById('password_label');
-
-    // Chuyển Form sang chế độ SỬA (EDIT)
     function editPatient(data) {
         formAction.value = 'edit';
         document.getElementById('patient_id').value = data.patient_id;
@@ -317,8 +298,6 @@ $patients = $patientManager->getPatients($keyword);
         document.getElementById('district_id').value = data.district_id || '';
         document.getElementById('street_id').value = data.street_id || '';
         document.getElementById('address').value = data.address || '';
-
-        // Khóa ô email và bỏ bắt buộc nhập mật khẩu khi sửa
         emailInput.value = data.email || '';
         emailInput.readOnly = true;
 
@@ -327,7 +306,6 @@ $patients = $patientManager->getPatients($keyword);
         passwordInput.placeholder = 'Leave blank to keep unchanged';
         passwordLabel.innerHTML = 'New Password';
 
-        // Cập nhật giao diện tiêu đề và nút bấm sang chế độ Sửa
         formHeader.style.color = '#d97706';
         formHeader.innerHTML = 'Editing Patient #' + data.patient_id;
         btnSubmit.innerHTML = 'Save Changes';
@@ -337,7 +315,6 @@ $patients = $patientManager->getPatients($keyword);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Xóa trực tiếp từ nút Delete ở bảng (gửi chung qua patientForm)
     function deletePatient(patientId, fullName) {
         if (confirm('Are you sure you want to delete/lock the record for patient "' + fullName + '"?')) {
             formAction.value = 'delete';
@@ -346,14 +323,12 @@ $patients = $patientManager->getPatients($keyword);
         }
     }
 
-    // Xóa từ nút Xóa ngay trên Form khi đang sửa
     function submitDeleteFromForm() {
         const patientId = document.getElementById('patient_id').value;
         const fullName = document.getElementById('full_name').value;
         deletePatient(patientId, fullName);
     }
 
-    // Đưa Form về trạng thái THÊM MỚI ban đầu
     function resetForm() {
         form.reset();
         formAction.value = 'add';
