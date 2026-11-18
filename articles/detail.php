@@ -31,7 +31,7 @@ if (!$article) {
 }
 
 // danh sách bình luận
-$stmtCom = $pdo->prepare("SELECT ac.*, u.full_name FROM articles_comments ac JOIN users u ON ac.user_id = u.user_id WHERE ac.article_id = ? ORDER BY ac.created_at DESC");
+$stmtCom = $pdo->prepare("SELECT ac.*, u.full_name FROM article_comments ac JOIN users u ON ac.user_id = u.user_id WHERE ac.article_id = ? ORDER BY ac.created_at DESC");
 $stmtCom->execute([$articleId]);
 $comments = $stmtCom->fetchAll();
 ?>
@@ -47,7 +47,7 @@ $comments = $stmtCom->fetchAll();
     <div class="main-container" style="max-width: 900px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px;">
         <a href="news.php">←Return to the news list </a>
         <h1><?php echo htmlspecialchars($article['title']); ?></h1>
-        <p style="color: #666; font-size: 13px;">Tác giả: <strong><?php echo htmlspecialchars($article['author_name']); ?></strong> | Ngày đăng: <?php echo $article['created_at']; ?></p>
+        <p style="color: #666; font-size: 13px;">Tác giả: <strong><?php echo htmlspecialchars($article['author_name']); ?></strong> | Date submit: <?php echo $article['created_at']; ?></p>
         <hr style="margin: 20px 0;">
         
         <div class="content">
@@ -62,8 +62,8 @@ $comments = $stmtCom->fetchAll();
         
         <?php if (isset($_SESSION['user_id'])): ?>
             <form action="detail.php?id=<?php echo $articleId; ?>" method="POST" style="margin-bottom: 20px;">
-                <textarea name="comment_text" rows="3" required placeholder="Nhập bình luận của bạn..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;"></textarea>
-                <button type="submit" name="submit_comment" style="margin-top: 8px; background: #00b074; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Gửi bình luận</button>
+                <textarea name="comment_text" rows="3" required placeholder="Please share your opinion..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;"></textarea>
+                <button type="submit" name="submit_comment" style="margin-top: 8px; background: #00b074; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Sent comment</button>
             </form>
         <?php else: ?>
             <p><a href="../auth/login.php">Log in</a> to participate in commenting on this article.</p>
