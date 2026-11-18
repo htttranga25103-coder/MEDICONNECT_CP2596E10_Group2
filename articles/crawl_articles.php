@@ -37,7 +37,7 @@ if ($countAdded == 0) {
             'title' => 'Tầm quan trọng của việc uống đủ nước đối với làn da và sức khỏe',
             'slug' => 'tam-quan-trong-cua-viec-uong-du-nuoc',
             'summary' => 'Nước chiếm phần lớn trọng lượng cơ thể, việc bổ sung đủ nước mỗi ngày giúp thanh lọc độc tố, làm đẹp da và tăng cường trao đổi chất.',
-            'content' => 'Cơ thể chúng ta cần trung bình từ 1.5 đến 2 lít nước mỗi ngày...Thiếu nước có thể dẫn đến tình trạng mệt mỏi, khô da, giảm tập trung và ảnh hưởng xấu đến thận.</p>'
+            'content' => 'Cơ thể chúng ta cần trung bình từ 1.5 đến 2 lít nước mỗi ngày...Thiếu nước có thể dẫn đến tình trạng mệt mỏi, khô da, giảm tập trung và ảnh hưởng xấu đến thận.'
         ]
     ];
 }
