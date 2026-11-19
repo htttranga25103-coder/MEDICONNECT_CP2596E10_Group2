@@ -37,8 +37,8 @@ $categories = $pdo->query("SELECT * FROM article_categories")->fetchAll();
 </head>
 <body>
     <div class="main-container" style="max-width: 800px;">
-        <h2>Manage& add new article</h2>
-        <a href="news.php">View articles</a> | <a href="../index.php">Về trang chủ</a>
+        <h2>Manage & add new article</h2>
+        <a href="news.php">View articles</a> | <a href="../index.php">Return to home page</a>
         <hr style="margin: 20px 0;">
 
         <?php if (!empty($message)): ?>
@@ -74,7 +74,7 @@ $categories = $pdo->query("SELECT * FROM article_categories")->fetchAll();
                 <label>Thumbnail image path:</label>
                 <input type="text" name="thumbnail_url">
             </div>
-            <button type="submit" name="create_article" class="btn-submit">Đăng bài viết</button>
+            <button type="submit" name="create_article" class="btn-submit">Post an article</button>
         </form>
     </div>
 </body>

@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
     $userId = $_SESSION['user_id'];
 
     if (!empty($commentText)) {
-        $stmtComment = $pdo->prepare("INSERT INTO articles_comments (article_id, user_id, comment_text) VALUES (?, ?, ?)");
+        $stmtComment = $pdo->prepare("INSERT INTO article_comments (article_id, user_id, comment_text) VALUES (?, ?, ?)");
         $stmtComment->execute([$articleId, $userId, $commentText]);
         header("Location: detail.php?id=" . $articleId);
         exit();
@@ -39,7 +39,7 @@ $comments = $stmtCom->fetchAll();
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title><?php echo htmlspecialchars($article['title']); ?> - MediConnect</title>
+    <title><?php echo htmlspecialchars($article['title']); ?> MediConnect</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/article_style.css">
 </head>
@@ -47,13 +47,13 @@ $comments = $stmtCom->fetchAll();
     <div class="main-container" style="max-width: 900px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px;">
         <a href="news.php">←Return to the news list </a>
         <h1><?php echo htmlspecialchars($article['title']); ?></h1>
-        <p style="color: #666; font-size: 13px;">Tác giả: <strong><?php echo htmlspecialchars($article['author_name']); ?></strong> | Date submit: <?php echo $article['created_at']; ?></p>
+        <p style="color: #666; font-size: 13px;">Author: <strong><?php echo htmlspecialchars($article['author_name']); ?></strong> | Date submit: <?php echo $article['created_at']; ?></p>
         <hr style="margin: 20px 0;">
         
         <div class="content">
-            <p><strong>Summary</strong> <?php echo nl2br(htmlspecialchars($article['summary'])); ?></p>
+             <?php echo nl2br(htmlspecialchars($article['summary'])); ?>
             <div style="margin-top: 20px; line-height: 1.6;">
-                <?php echo nl2br(htmlspecialchars($article['content'])); ?>
+            <?php echo nl2br(htmlspecialchars($article['content'])); ?>
             </div>
         </div>
 

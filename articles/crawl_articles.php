@@ -14,8 +14,7 @@ require_once '../config/database.php';
 
 $defaultAuthorId = 1; 
 
-$url = "https://suckhoedoisong.vn/";
-$countAdded = 0;
+
 $defaultCategoryId = null; //dung null de test
 $defaultAuthorId = $_SESSION['user_id'];
 //test bai viet
@@ -53,9 +52,9 @@ if ($countAdded == 0) {
 <body>
     <div class="main-container" style="max-width: 600px; margin: 50px auto; text-align: center;">
         <h2 style="color: #00b074;">Data updated successfully!</h2>
-        <p>Successfully added to th database: <strong><?php echo $countAdded; ?></strong> bài viết.</p>
+        <p>Successfully added to th database: <strong><?php echo $countAdded; ?></strong> Articles</p>
         <div style="margin-top: 20px;">
-            <a href="news.php" class="btn-auth" style="background: #00b074; text-decoration: none;">Xem danh sách tin</a>
+            <a href="news.php" class="btn-auth" style="background: #00b074; text-decoration: none;">View category article</a>
             <a href="../index.php" class="btn-auth" style="background: #6c757d; text-decoration: none; margin-left: 10px;">Về trang chủ</a>
         </div>
     </div>
