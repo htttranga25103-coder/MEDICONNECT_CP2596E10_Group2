@@ -1,16 +1,10 @@
 <?php
-// ============================================================
-// Các hàm dùng chung cho module bài viết (manage, edit, news)
-// ============================================================
-
-// Escape dữ liệu trước khi in ra HTML (chống XSS)
+// chống XSS
 if (!function_exists('e')) {
     function e($value): string {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 }
-
-// ---------- PHÂN QUYỀN ----------
 
 // Chỉ Admin hoặc Doctor mới được vào trang quản lý bài viết
 function requireStaff(): void {
@@ -31,7 +25,6 @@ function canManageArticle(array $article): bool {
         && (int)$article['author_id'] === (int)($_SESSION['user_id'] ?? 0);
 }
 
-// ---------- SLUG (đường dẫn thân thiện) ----------
 
 // "Cách nhận biết đột quỵ" -> "cach-nhan-biet-dot-quy"
 function slugify(string $text): string {
@@ -79,9 +72,6 @@ function makeUniqueSlug(PDO $pdo, string $base, int $excludeId = 0): string {
     }
     return $slug;
 }
-
-// ---------- KIỂM TRA DỮ LIỆU FORM BÀI VIẾT ----------
-
 // Trả về [dữ liệu đã làm sạch, thông báo lỗi]. Lỗi rỗng nghĩa là hợp lệ.
 function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
     $data = [
@@ -147,8 +137,6 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
 
     return [$data, ''];
 }
-
-// ---------- PHÂN TRANG ----------
 
 // Lấy số trang hiện tại từ ?page=, luôn nằm trong khoảng 1..tổng số trang
 function currentPage(int $totalPages): int {
