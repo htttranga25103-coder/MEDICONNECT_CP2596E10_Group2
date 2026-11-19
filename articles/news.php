@@ -6,17 +6,28 @@ error_reporting(E_ALL);
 
 session_start();
 require_once '../config/database.php';
+require_once '../includes/functions.php';
+
+$perPage = 10;   // số bài mỗi trang
 
 try {
     //u.user_id chính xác tuyệt đối
-    $stmt = $pdo->query("
+    $totalArticles = (int)$pdo->query("SELECT COUNT(*) FROM articles")->fetchColumn();
+    $totalPages    = max(1, (int)ceil($totalArticles / $perPage));
+    $page          = currentPage($totalPages);
+
+    // article_id DESC giúp thứ tự luôn cố định khi nhiều bài có cùng thời gian đăng
+    $stmt = $pdo->prepare("
         SELECT a.*, ac.name as category_name, u.full_name as author_name
         FROM articles a
         LEFT JOIN article_categories ac ON a.category_id = ac.category_id
         JOIN users u ON a.author_id = u.user_id
-        ORDER BY a.created_at DESC
-        LIMIT 5
+        ORDER BY a.created_at DESC, a.article_id DESC
+        LIMIT :limit OFFSET :offset
     ");
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+    $stmt->execute();
     $articles = $stmt->fetchAll();
 } catch (\PDOException $e) {
     die("SQL query error: " . $e->getMessage());
@@ -41,6 +52,10 @@ try {
         .article-title:hover { text-decoration: underline; }
         .meta-info { font-size: 13px; color: #666; margin-top: 5px; }
         .btn-auth { background: #00b074; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; }
+        .pagination { margin-top: 20px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .pagination a, .pagination .current { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #00b074; font-size: 14px; }
+        .pagination .current { background: #00b074; color: #fff; border-color: #00b074; }
+        .pagination .dots { color: #888; }
     </style>
 </head>
 <body>
@@ -80,6 +95,8 @@ try {
         <?php else: ?>
             <p style="color: #666; font-style: italic;">No articles found in the database</p>
         <?php endif; ?>
+
+        <?php echo renderPagination($page, $totalPages, 'news.php'); ?>
     </div>
 </body>
 </html>

@@ -52,7 +52,7 @@ try {
 
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? ''); ?></strong>!</span>
-                    
+                    <a href = "auth/profile.php" class="btn-auth" style = "background: #17a2b8; color: white;">Profile</a>
                     <?php if (in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])): ?>
                         <a href="articles/manage.php" class="btn-auth" style="background: #ffc107; color: #333;">Manage</a>
                         <a href="articles/crawl_articles.php" class="btn-auth" style="background: #17a2b8; color: white;">Articles update auto</a>
