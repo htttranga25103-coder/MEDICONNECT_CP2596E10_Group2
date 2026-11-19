@@ -48,7 +48,6 @@ $form = [
     'thumbnail_url' => $article['thumbnail_url'] ?? '',
 ];
 
-// ===== LƯU THAY ĐỔI =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_article'])) {
     foreach ($form as $key => $unused) {
         $form[$key] = trim($_POST[$key] ?? '');   // giữ lại nội dung đã gõ nếu có lỗi

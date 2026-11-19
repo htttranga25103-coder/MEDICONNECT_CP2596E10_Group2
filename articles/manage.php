@@ -35,7 +35,7 @@ try {
     $categories = [];
 }
 
-// ===== THÊM BÀI VIẾT =====
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_article'])) {
     foreach ($form as $key => $unused) {
         $form[$key] = trim($_POST[$key] ?? '');   // giữ lại nội dung đã gõ nếu có lỗi
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_article'])) {
     $messageType = 'error';
 }
 
-// ===== XÓA BÀI VIẾT =====
+// xoa bai 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article'])) {
     $deleteId = (int)($_POST['article_id'] ?? 0);
     $backPage = max(1, (int)($_POST['page'] ?? 1));

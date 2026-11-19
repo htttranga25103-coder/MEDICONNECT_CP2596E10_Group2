@@ -72,7 +72,7 @@ function makeUniqueSlug(PDO $pdo, string $base, int $excludeId = 0): string {
     }
     return $slug;
 }
-// Trả về [dữ liệu đã làm sạch, thông báo lỗi]. Lỗi rỗng nghĩa là hợp lệ.
+// Trả về dữ liệu đã làm sạch, thông báo lỗi. Lỗi rỗng nghĩa là hợp lệ
 function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
     $data = [
         'title'         => trim($post['title'] ?? ''),
