@@ -6,7 +6,7 @@ if (!function_exists('e')) {
     }
 }
 
-// Chỉ Admin hoặc Doctor mới được vào trang quản lý bài viết
+// Chỉ Admin/Doctor mới được vào trang quản lý bài viết
 function requireStaff(): void {
     $role = $_SESSION['role_name'] ?? '';
     if (!isset($_SESSION['user_id']) || !in_array($role, ['ADMIN', 'DOCTOR'], true)) {
@@ -15,7 +15,7 @@ function requireStaff(): void {
     }
 }
 
-// Admin sửa/xóa được mọi bài. Doctor chỉ sửa/xóa bài do chính mình đăng.
+// Admin sửa/xóa được mọi bài. Doctor chỉ sửa/xóa bài do chính mình đăng
 function canManageArticle(array $article): bool {
     $role = $_SESSION['role_name'] ?? '';
     if ($role === 'ADMIN') {
@@ -24,9 +24,7 @@ function canManageArticle(array $article): bool {
     return $role === 'DOCTOR'
         && (int)$article['author_id'] === (int)($_SESSION['user_id'] ?? 0);
 }
-
-
-// "Cách nhận biết đột quỵ" -> "cach-nhan-biet-dot-quy"
+// duong dan khong dau
 function slugify(string $text): string {
     $text = mb_strtolower(trim($text), 'UTF-8');
 
@@ -72,7 +70,7 @@ function makeUniqueSlug(PDO $pdo, string $base, int $excludeId = 0): string {
     }
     return $slug;
 }
-// Trả về dữ liệu đã làm sạch, thông báo lỗi. Lỗi rỗng nghĩa là hợp lệ
+// Trả về dữ liệu đã làm sạch, thông báo lỗi. null là hợp lệ
 function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
     $data = [
         'title'         => trim($post['title'] ?? ''),
@@ -92,8 +90,7 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
     if (mb_strlen($data['summary']) > 1000) {
         return [$data, "Summary is too long (up to 1000 characters)."];
     }
-
-    // Ảnh bìa: để trống, hoặc link https, hoặc đường dẫn tương đối tới file ảnh
+    // Ảnh bìa: để trống/link https/đường dẫn tương đối tới file ảnh
     $thumb = $data['thumbnail_url'];
     if ($thumb !== '') {
         $isHttps    = preg_match('#^https://[^\s]+$#i', $thumb) === 1;
@@ -104,8 +101,7 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
             return [$data, "Thumbnail must be an https:// link or an image file path (png, jpg, gif, webp)."];
         }
     }
-
-    // Danh mục: để trống = không có danh mục; nếu chọn thì phải tồn tại
+    // Danh mục: null = không có danh mục; nếu chọn thì phải tồn tại
     if ($data['category_id'] === '') {
         $data['category_id'] = null;
     } else {
@@ -134,17 +130,15 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
         }
         $data['slug'] = makeUniqueSlug($pdo, $base, $excludeId);
     }
-
     return [$data, ''];
 }
-
 // Lấy số trang hiện tại từ ?page=, luôn nằm trong khoảng 1..tổng số trang
 function currentPage(int $totalPages): int {
     $page = (int)($_GET['page'] ?? 1);
     return max(1, min($page, max(1, $totalPages)));
 }
 
-// Tạo thanh phân trang: « Prev 1 2 [3] 4 5 Next »
+// Tạo thanh phân trang  
 function renderPagination(int $page, int $totalPages, string $baseUrl): string {
     if ($totalPages <= 1) {
         return '';
@@ -175,7 +169,7 @@ function renderPagination(int $page, int $totalPages, string $baseUrl): string {
         $previous = $p;
     }
     if ($page < $totalPages) {
-        $html .= '<a href="' . $link($page + 1) . '">Next &raquo;</a>';
+        $html .= '<a href="' . $link($page + 1) . '">Next</a>';
     }
     return $html . '</div>';
 }
