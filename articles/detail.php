@@ -1,7 +1,42 @@
 <?php
 session_start();
 require_once '../config/database.php';
-$articleId = $_GET['id'] ?? 0;
+require_once '../includes/functions.php';
+require_once '../includes/csrf.php';
+
+$articleId = (int)($_GET['id'] ?? 0);
+$maxCommentLength = 1000;
+$detailUrl = 'detail.php?id'.$articleId;
+
+//hien 1 lan thong bao da xoaa
+$flash = $_SESSION['comment_flash']??null;
+unset($_SESSION['comment_flash']);
+
+//reset tra lai trang thai moi (f5)
+function redirectWithCommentFlash(string $type, string $text, string $url): void{
+    $_SESSION['comment_flash']=['type' => $type, 'text' => $text];
+    header("Location:". $url);
+    exit();
+}
+
+//check xem baif viet co ton tai truoc khi hien thi
+try{
+    $stmtArt = $pdo->prepare("SELECT a.*, u.full_name as author_name
+    FROM articles a JOIN users u ON a.author_id = u.user_id WHERE a.article_id =?");
+    $stmtArt->execute([$articleId]);
+    $article = $stmtArt->fetch();
+}catch(\PDOException $e){
+    error_log("article load error:". $e->getMessage());
+    http_response_code(500);
+    die("Unable to load the article. Please try again later.");
+}
+if(!$article){
+    http_response_code(404);
+    die("The article does not exist!");
+}
+
+$commentError = '';
+$commentDraft = '';
 
 //  gửi bình luận
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
