@@ -1,4 +1,4 @@
-$form action = "<?php echo e($formAction); ?>" methond = "POST">
+<form action = "<?php echo e($formAction); ?>" methond = "POST">
     <?php echo csrfFile(); ?>
         <div class="form-group-custom">
             <label>Article title:</label>

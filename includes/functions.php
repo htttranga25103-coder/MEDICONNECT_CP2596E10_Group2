@@ -24,6 +24,15 @@ function canManageArticle(array $article): bool {
     return $role === 'DOCTOR'
         && (int)$article['author_id'] === (int)($_SESSION['user_id'] ?? 0);
 }
+
+//tuong tu bai viet, binh luan cung duoc xoa boi chinh nguoi viet/admin
+function canDeleteComment(array $comment): bool{
+    if(!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    return ($_SESSION['role_name'] ?? '') === 'ADMIN'||(int)$comment['user_id'] === (int)$_SESSION['user_id'];
+}
+
 // duong dan khong dau
 function slugify(string $text): string {
     $text = mb_strtolower(trim($text), 'UTF-8');
@@ -90,7 +99,7 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
     if (mb_strlen($data['summary']) > 1000) {
         return [$data, "Summary is too long (up to 1000 characters)."];
     }
-    // Ảnh bìa: để trống/link https/đường dẫn tương đối tới file ảnh
+// Ảnh bìa: để trống/link https/đường dẫn tương đối tới file ảnh
     $thumb = $data['thumbnail_url'];
     if ($thumb !== '') {
         $isHttps    = preg_match('#^https://[^\s]+$#i', $thumb) === 1;
@@ -101,7 +110,7 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
             return [$data, "Thumbnail must be an https:// link or an image file path (png, jpg, gif, webp)."];
         }
     }
-    // Danh mục: null = không có danh mục; nếu chọn thì phải tồn tại
+// Danh mục: null = không có danh mục; nếu chọn thì phải tồn tại
     if ($data['category_id'] === '') {
         $data['category_id'] = null;
     } else {
@@ -113,7 +122,7 @@ function parseArticleForm(PDO $pdo, array $post, int $excludeId = 0): array {
         $data['category_id'] = (int)$data['category_id'];
     }
 
-    // Slug: tự nhập thì kiểm tra trùng, để trống thì tự tạo từ tiêu đề
+// Slug: tự nhập thì kiểm tra trùng, để trống thì tự tạo từ tiêu đề
     if ($data['slug'] !== '') {
         $clean = slugify($data['slug']);
         if ($clean === '') {

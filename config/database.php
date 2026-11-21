@@ -1,4 +1,7 @@
 <?php
+ini_set('display_error','0');
+ini_set('log_error','1');
+
 $host = '127.0.0.1';
 $db = 'mediconnect';
 $user = 'root';
@@ -14,5 +17,7 @@ $options =[
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch(\PDOException $e){
+    error_log("Database connection error:" . $e->getMessage());
+    http_response_code(500);
     die("Database connection error:" . $e->getMessage());
 }
