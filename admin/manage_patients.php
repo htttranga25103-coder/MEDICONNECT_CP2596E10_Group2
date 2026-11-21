@@ -54,7 +54,7 @@ $patients = $patientManager->getPatients($keyword);
             <li><a href="manage_patients.php" class="active">Patients</a></li>
             <li><a href="manage_doctors.php"> Doctors</a></li>
             <li><a href="review_applications.php">Review Applications</a></li>
-            <li><a href="manage_news.php">News Management</a></li>
+            <li><a href="../articles/manage.php">News Management</a></li>
         </ul>
     </aside>
     <div class="main-area">

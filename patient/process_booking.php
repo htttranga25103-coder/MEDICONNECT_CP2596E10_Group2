@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['patient_id'])) {
 
         if (!$schedule || $schedule['is_available'] == 0 || $schedule['doctor_id'] != $doctor_id) {
             $conn->rollback();
-            $_SESSION['error'] = "Suất khám này vừa có người đặt trước hoặc không hợp lệ!";
+            $_SESSION['error'] = "This appointment slot has just been booked by someone else or is invalid!";
             header("Location: book_appointment.php");
             exit();
         }
@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['patient_id'])) {
         $stmtUpdate = $conn->prepare("UPDATE doctor_schedules SET is_available = 0 WHERE schedule_id = ?");
         $stmtUpdate->bind_param("i", $schedule_id);
         $stmtUpdate->execute();
-        $titlePat = "Đặt lịch khám thành công";
-        $msgPat = "Bạn đã đặt lịch khám ngày " . $schedule['work_date'] . " lúc " . $schedule['start_time'] . ". Đang chờ bác sĩ xác nhận.";
+        $titlePat = "Appointment Booked Successfully";
+        $msgPat = "You have booked an appointment on " . $schedule['work_date'] . " at " . $schedule['start_time'] . ". Waiting for doctor's confirmation.";
         $stmtNotifPat = $conn->prepare("
             INSERT INTO notifications (user_id, title, message, type, is_read) 
             VALUES (?, ?, ?, 'SYSTEM_ALERT', 0)
@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['patient_id'])) {
         $docUser = $stmtDocUser->get_result()->fetch_assoc();
 
         if ($docUser) {
-            $titleDoc = "Có lịch hẹn khám mới";
-            $msgDoc = "Bệnh nhân vừa đặt lịch khám vào ngày " . $schedule['work_date'] . " lúc " . $schedule['start_time'] . ".";
+            $titleDoc = "New Appointment Request";
+            $msgDoc = "A patient has just booked an appointment on " . $schedule['work_date'] . " at " . $schedule['start_time'] . ".";
             $stmtNotifDoc = $conn->prepare("
                 INSERT INTO notifications (user_id, title, message, type, is_read) 
                 VALUES (?, ?, ?, 'SYSTEM_ALERT', 0)
@@ -61,14 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['patient_id'])) {
         $conn->commit();
         $conn->close();
 
-        $_SESSION['success'] = "Đặt lịch khám thành công!";
+        $_SESSION['success'] = "Appointment booked successfully!";
         header("Location: appointment_history.php");
         exit();
 
     } catch (Exception $e) {
         $conn->rollback();
         $conn->close();
-        $_SESSION['error'] = "Lỗi hệ thống: " . $e->getMessage();
+        $_SESSION['error'] = "System error: " . $e->getMessage();
         header("Location: book_appointment.php");
         exit();
     }

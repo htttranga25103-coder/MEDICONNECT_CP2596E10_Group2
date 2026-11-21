@@ -227,7 +227,74 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(22, 128, 119, 0.12);
 }
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
 
+.page-link {
+    padding: 7px 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #168077;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover {
+    background-color: #f0fdfa;
+    border-color: #168077;
+}
+
+.page-link.active {
+    background-color: #168077;
+    color: #ffffff;
+    border-color: #168077;
+}
+.doc-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.doc-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #168077;
+    flex-shrink: 0;
+    background-color: #f0fdfa;
+}
+
+.profile-header-flex {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.profile-avatar-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #168077;
+    flex-shrink: 0;
+    background-color: #f0fdfa;
+}
+.badge-cancelled {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
 .doc-name { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 5px; }
 .doc-spec { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-bottom: 12px; }
 .doc-meta { font-size: 13.5px; color: #475569; margin-bottom: 6px; }

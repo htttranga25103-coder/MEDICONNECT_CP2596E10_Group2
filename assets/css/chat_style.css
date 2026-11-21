@@ -23,7 +23,37 @@
     border-bottom: 1px solid #e2e8f0;
     background-color: #ffffff;
 }
+.contact-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
 
+.chat-contact-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #168077;
+    flex-shrink: 0;
+    background-color: #f0fdfa;
+}
+
+.chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-header-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #168077;
+    flex-shrink: 0;
+    background-color: #f0fdfa;
+}
 .contact-list {
     flex: 1;
     overflow-y: auto;

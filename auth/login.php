@@ -19,9 +19,7 @@ session_start();
             </div>
         </div>
 
-        <h2>LOG IN</h2>
-        
-        <!-- Hiển thị thông báo lỗi/thành công -->
+        <h2>LOG IN</h2>     
         <?php if (isset($_SESSION['error'])): ?>
             <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
         <?php endif; ?>

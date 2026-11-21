@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/config/MyConnection.php';
 require_once __DIR__ . '/models/ChatManager.php';
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_name'] ?? '', ['PATIENT', 'DOCTOR'])) {
     header("Location: login.php");
     exit();
@@ -12,14 +13,38 @@ $chatManager = new ChatManager($conn);
 
 $current_user_id = (int)$_SESSION['user_id'];
 $role_name       = $_SESSION['role_name'];
-$contacts   = $chatManager->getChatContacts($current_user_id, $role_name);
-$partner_id = isset($_GET['partner_id']) ? (int)$_GET['partner_id'] : 0;
+$contacts        = $chatManager->getChatContacts($current_user_id, $role_name);
+$partner_id      = isset($_GET['partner_id']) ? (int)$_GET['partner_id'] : 0;
 
 if ($partner_id === 0 && count($contacts) > 0) {
     $partner_id = (int)$contacts[0]['user_id'];
 }
-$partner = $partner_id > 0 ? $chatManager->getPartnerInfo($partner_id) : null;
+$partner  = $partner_id > 0 ? $chatManager->getPartnerInfo($partner_id) : null;
 $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'doctor/dashboard.php';
+function resolveUserAvatar(?string $avatarUrl): string {
+    $defaultAvatar = 'assets/uploads/avatars/default_avatar.png';
+
+    if (empty($avatarUrl)) {
+        return $defaultAvatar;
+    }
+
+    $possiblePaths = [
+        $avatarUrl,
+        'assets/uploads/avatars/' . $avatarUrl,
+        'uploads/avatars/' . $avatarUrl,
+        'assets/images/avatars/' . $avatarUrl,
+        'uploads/' . $avatarUrl,
+    ];
+
+    foreach ($possiblePaths as $relPath) {
+        $relPath = ltrim($relPath, '/');
+        if (file_exists(__DIR__ . '/' . $relPath)) {
+            return $relPath;
+        }
+    }
+
+    return $defaultAvatar;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,8 +52,8 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Consultation Chat</title>
-    <link rel="stylesheet" href="assets/css/patient_booking.css?v=2">
-    <link rel="stylesheet" href="assets/css/chat_style.css?v=1">
+    <link rel="stylesheet" href="assets/css/patient_booking.css?v=5">
+    <link rel="stylesheet" href="assets/css/chat_style.css?v=2">
 </head>
 <body>
 <nav class="patient-navbar">
@@ -38,6 +63,7 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
         <ul class="nav-links">
             <?php if ($role_name === 'PATIENT'): ?>
                 <li><a href="patient/book_appointment.php">Book Appointment</a></li>
+                <li><a href="patient/my_appointments.php">My Appointments</a></li>
                 <li><a href="chat.php" class="active">Consultation Chat</a></li>
                 <li><a href="patient/profile.php">My Profile</a></li>
             <?php else: ?>
@@ -66,16 +92,21 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
                     <?php foreach ($contacts as $c): ?>
                         <a href="chat.php?partner_id=<?= $c['user_id'] ?>" 
                            class="contact-item <?= ($partner_id === (int)$c['user_id']) ? 'active' : '' ?>">
-                            <div>
-                                <div class="contact-name">
-                                    <?= ($role_name === 'PATIENT') ? 'Dr. ' : '' ?><?= htmlspecialchars($c['full_name']) ?>
-                                </div>
-                                <div class="contact-sub">
-                                    <?php if ($role_name === 'PATIENT'): ?>
-                                        <?= htmlspecialchars($c['specialty'] ?? 'Specialist') ?>
-                                    <?php else: ?>
-                                        <?= htmlspecialchars($c['gender'] ?? 'Patient') ?>
-                                    <?php endif; ?>
+                            <div class="contact-left">
+                                <img src="<?= htmlspecialchars(resolveUserAvatar($c['avatar_url'] ?? null)) ?>" 
+                                     alt="Avatar" 
+                                     class="chat-contact-avatar">
+                                <div>
+                                    <div class="contact-name">
+                                        <?= ($role_name === 'PATIENT') ? 'Dr. ' : '' ?><?= htmlspecialchars($c['full_name']) ?>
+                                    </div>
+                                    <div class="contact-sub">
+                                        <?php if ($role_name === 'PATIENT'): ?>
+                                            <?= htmlspecialchars($c['specialty'] ?? 'Specialist') ?>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($c['gender'] ?? 'Patient') ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                             <?php if ((int)$c['unread_count'] > 0): ?>
@@ -92,14 +123,20 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
                 <?php endif; ?>
             </div>
         </aside>
+
         <section class="chat-main">
             <?php if ($partner): ?>
                 <div class="chat-header">
-                    <div>
-                        <div class="chat-partner-title">
-                            <?= ($partner['role_name'] === 'DOCTOR') ? 'Dr. ' : '' ?><?= htmlspecialchars($partner['full_name']) ?>
+                    <div class="chat-header-info">
+                        <img src="<?= htmlspecialchars(resolveUserAvatar($partner['avatar_url'] ?? null)) ?>" 
+                             alt="Avatar" 
+                             class="chat-header-avatar">
+                        <div>
+                            <div class="chat-partner-title">
+                                <?= ($partner['role_name'] === 'DOCTOR') ? 'Dr. ' : '' ?><?= htmlspecialchars($partner['full_name']) ?>
+                            </div>
+                            <span class="online-status"> Online</span>
                         </div>
-                        <span class="online-status"> Online</span>
                     </div>
                 </div>
 
@@ -135,11 +172,13 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     let lastRenderedCount = -1;
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
+
     function fetchMessages(forceScroll = false) {
         fetch(`api/chat_api.php?action=fetch&partner_id=${partnerId}`)
             .then(res => res.json())
@@ -174,6 +213,7 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
             })
             .catch(err => console.error('Chat fetch error:', err));
     }
+
     chatForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const text = messageInput.value.trim();
@@ -195,14 +235,15 @@ $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'docto
             if (data.status) {
                 fetchMessages(true);
             } else {
-                alert(data.message || 'Could not send message.');
+                alert(data.message || 'Failed to send message.');
             }
-        });
+        })
+        .catch(err => console.error('Chat send error:', err));
     });
+
     fetchMessages(true);
-    setInterval(() => fetchMessages(false), 2000);
+    setInterval(() => fetchMessages(false), 3000);
 </script>
 <?php endif; ?>
-
 </body>
 </html>

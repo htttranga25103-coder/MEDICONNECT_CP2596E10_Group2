@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/MyConnection.php';
 require_once __DIR__ . '/../models/AppointmentManager.php';
+
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'PATIENT') {
     header("Location: ../login.php");
     exit();
@@ -10,40 +11,79 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'PATIENT') {
 $conn = MyConnection::connectDatabase();
 $apptManager = new AppointmentManager($conn);
 $patient_id = $apptManager->getPatientIdByUserId($_SESSION['user_id']);
+
 if (!$patient_id) {
     die("Patient profile not found. Please contact administrator.");
 }
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $result = null;
+function resolveDoctorAvatar(?string $avatarUrl): string {
+    $defaultAvatar = '../assets/uploads/avatars/default_avatar.png';
 
-    if ($action === 'book') {
-        $result = $apptManager->bookAppointment($patient_id, $_POST);
-    } elseif ($action === 'cancel') {
-        $result = $apptManager->cancelAppointment((int)$_POST['appointment_id'], $patient_id);
+    if (empty($avatarUrl)) {
+        return $defaultAvatar;
     }
 
-    if ($result) {
-        $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
+    $possiblePaths = [
+        $avatarUrl,
+        'assets/uploads/avatars/' . $avatarUrl,
+        'uploads/avatars/' . $avatarUrl,
+        'assets/images/avatars/' . $avatarUrl,
+        'uploads/' . $avatarUrl,
+    ];
+
+    foreach ($possiblePaths as $relPath) {
+        $relPath = ltrim($relPath, '/');
+        if (file_exists(__DIR__ . '/../' . $relPath)) {
+            return '../' . $relPath;
+        }
     }
 
-    $redirectUrl = "book_appointment.php";
-    if (!empty($_POST['doctor_id'])) {
-        $redirectUrl .= "?doctor_id=" . (int)$_POST['doctor_id'];
+    return $defaultAvatar;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'book') {
+    $result = $apptManager->bookAppointment($patient_id, $_POST);
+    $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
+
+    if ($result['status']) {
+        header("Location: my_appointments.php");
+        exit();
     }
+
+    $redirectParams = array_filter([
+        'specialization_id' => !empty($_POST['specialization_id']) ? (int)$_POST['specialization_id'] : null,
+        'city_id'           => !empty($_POST['city_id']) ? (int)$_POST['city_id'] : null,
+        'keyword'           => !empty($_POST['keyword']) ? trim($_POST['keyword']) : null,
+        'page'              => !empty($_POST['page']) && (int)$_POST['page'] > 1 ? (int)$_POST['page'] : null,
+        'doctor_id'         => !empty($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : null,
+    ]);
+
+    $redirectUrl = "book_appointment.php" . (!empty($redirectParams) ? "?" . http_build_query($redirectParams) : "");
     header("Location: " . $redirectUrl);
     exit();
 }
+
 $filterSpec      = isset($_GET['specialization_id']) ? (int)$_GET['specialization_id'] : 0;
+$filterCity      = isset($_GET['city_id']) ? (int)$_GET['city_id'] : 0;
 $filterKeyword   = trim($_GET['keyword'] ?? '');
+
 $specializations = $apptManager->getSpecializations();
-$doctors         = $apptManager->getAvailableDoctors($filterSpec, $filterKeyword);
+$cities          = $apptManager->getCities();
+$limit        = 6;
+$currentPage  = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$totalDoctors = $apptManager->countAvailableDoctors($filterSpec, $filterKeyword, $filterCity);
+$totalPages   = max(1, (int)ceil($totalDoctors / $limit));
+
+if ($currentPage > $totalPages) {
+    $currentPage = $totalPages;
+}
+$offset  = ($currentPage - 1) * $limit;
+$doctors = $apptManager->getAvailableDoctors($filterSpec, $filterKeyword, $limit, $offset, $filterCity);
+
 $selectedDoctorId = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
 $filterDate       = trim($_GET['work_date'] ?? '');
 
 $selectedDoctor = $selectedDoctorId > 0 ? $apptManager->getDoctorById($selectedDoctorId) : null;
 $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDoctorId, $filterDate) : [];
-$appointments = $apptManager->getPatientAppointments($patient_id);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,7 +91,7 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Book a Doctor Appointment</title>
-    <link rel="stylesheet" href="../assets/css/patient_booking.css?v=2">
+    <link rel="stylesheet" href="../assets/css/patient_booking.css?v=5">
 </head>
 <body>
 <nav class="patient-navbar">
@@ -60,6 +100,7 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
 
         <ul class="nav-links">
             <li><a href="book_appointment.php" class="active">Book Appointment</a></li>
+            <li><a href="my_appointments.php">My Appointments</a></li>
             <li><a href="../chat.php">Consultation Chat</a></li>
             <li><a href="profile.php">My Profile</a></li>
         </ul>
@@ -72,12 +113,14 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
         </div>
     </div>
 </nav>
+
 <section class="hero-banner">
     <div class="hero-inner">
         <h1>Book Your Medical Appointment</h1>
         <p>Browse certified specialists, view doctor profiles, and schedule your visit in just a few clicks.</p>
     </div>
 </section>
+
 <main class="main-container">
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert-box alert-success">
@@ -94,9 +137,10 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
         </div>
         <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
+
     <div class="panel-card">
         <div class="panel-header">
-            <span class="panel-title"> Available Doctors (<?= count($doctors) ?>)</span>
+            <span class="panel-title"> Available Doctors (<?= $totalDoctors ?>)</span>
 
             <form method="GET" action="book_appointment.php" class="search-bar">
                 <?php if (!empty($specializations)): ?>
@@ -109,9 +153,22 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
                         <?php endforeach; ?>
                     </select>
                 <?php endif; ?>
+
+                <?php if (!empty($cities)): ?>
+                    <select name="city_id" class="form-select">
+                        <option value="0">-- All Cities --</option>
+                        <?php foreach ($cities as $c): ?>
+                            <option value="<?= $c['city_id'] ?>" <?= $filterCity === (int)$c['city_id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($c['city_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
+
                 <input type="text" name="keyword" class="form-control" placeholder="Search doctor or hospital..." value="<?= htmlspecialchars($filterKeyword) ?>">
                 <button type="submit" class="btn-mc btn-mc-teal">Filter</button>
-                <?php if ($filterSpec > 0 || !empty($filterKeyword)): ?>
+
+                <?php if ($filterSpec > 0 || $filterCity > 0 || !empty($filterKeyword)): ?>
                     <a href="book_appointment.php" class="btn-mc btn-mc-outline-gray">Reset</a>
                 <?php endif; ?>
             </form>
@@ -120,16 +177,33 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
         <?php if (count($doctors) > 0): ?>
             <div class="doctor-grid">
                 <?php foreach ($doctors as $doc): ?>
+                    <?php
+                        $docLinkParams = array_filter([
+                            'specialization_id' => $filterSpec ?: null,
+                            'city_id'           => $filterCity ?: null,
+                            'keyword'           => $filterKeyword ?: null,
+                            'page'              => $currentPage > 1 ? $currentPage : null,
+                            'doctor_id'         => $doc['doctor_id'],
+                        ]);
+                        $docAvatarSrc = resolveDoctorAvatar($doc['avatar_url'] ?? null);
+                    ?>
                     <div class="doctor-card <?= ($selectedDoctorId === (int)$doc['doctor_id']) ? 'selected' : '' ?>">
                         <div>
-                            <div class="doc-name">Dr. <?= htmlspecialchars($doc['full_name']) ?></div>
-                            <span class="doc-spec"><?= htmlspecialchars($doc['specialization_name'] ?? 'General Specialist') ?></span>
+                            <div class="doc-card-header">
+                                <img src="<?= htmlspecialchars($docAvatarSrc) ?>" 
+                                     alt="Dr. <?= htmlspecialchars($doc['full_name']) ?>" 
+                                     class="doc-avatar">
+                                <div>
+                                    <div class="doc-name">Dr. <?= htmlspecialchars($doc['full_name']) ?></div>
+                                    <span class="doc-spec"><?= htmlspecialchars($doc['specialization_name'] ?? 'General Specialist') ?></span>
+                                </div>
+                            </div>
                             <div class="doc-meta"><strong>Degree:</strong> <?= htmlspecialchars($doc['degree'] ?? 'N/A') ?></div>
                             <div class="doc-meta"><strong>Experience:</strong> <?= (int)($doc['experience_years'] ?? 0) ?> years</div>
                             <div class="doc-meta"><strong>Workplace:</strong> <?= htmlspecialchars($doc['work_place'] ?? 'N/A') ?> <?= !empty($doc['city_name']) ? '(' . htmlspecialchars($doc['city_name']) . ')' : '' ?></div>
                         </div>
                         <div class="doc-card-footer">
-                            <a href="book_appointment.php?doctor_id=<?= $doc['doctor_id'] ?>#booking-section" 
+                            <a href="book_appointment.php?<?= http_build_query($docLinkParams) ?>#booking-section" 
                                class="btn-mc btn-mc-teal w-100">
                                 View Profile & Schedule
                             </a>
@@ -137,24 +211,72 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
                     </div>
                 <?php endforeach; ?>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <?php
+                $buildPageUrl = function(int $page) use ($filterSpec, $filterCity, $filterKeyword): string {
+                    $params = array_filter([
+                        'specialization_id' => $filterSpec ?: null,
+                        'city_id'           => $filterCity ?: null,
+                        'keyword'           => $filterKeyword ?: null,
+                        'page'              => $page > 1 ? $page : null,
+                    ]);
+                    return 'book_appointment.php' . (!empty($params) ? '?' . http_build_query($params) : '');
+                };
+                ?>
+                <div class="pagination-wrapper">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="<?= $buildPageUrl($currentPage - 1) ?>" class="page-link">« Prev</a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <a href="<?= $buildPageUrl($i) ?>" 
+                           class="page-link <?= ($i === $currentPage) ? 'active' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="<?= $buildPageUrl($currentPage + 1) ?>" class="page-link">Next »</a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         <?php else: ?>
             <p class="empty-cell">No approved doctors found matching your criteria.</p>
         <?php endif; ?>
     </div>
+
     <?php if ($selectedDoctor): ?>
+        <?php
+            $closeParams = array_filter([
+                'specialization_id' => $filterSpec ?: null,
+                'city_id'           => $filterCity ?: null,
+                'keyword'           => $filterKeyword ?: null,
+                'page'              => $currentPage > 1 ? $currentPage : null,
+            ]);
+            $closeUrl = 'book_appointment.php' . (!empty($closeParams) ? '?' . http_build_query($closeParams) : '');
+            $selectedAvatarSrc = resolveDoctorAvatar($selectedDoctor['avatar_url'] ?? null);
+        ?>
         <div class="panel-card" id="booking-section">
             <div class="panel-header">
                 <span class="panel-title"> Doctor Profile & Available Schedule</span>
-                <a href="book_appointment.php" class="btn-mc btn-mc-outline-gray">Close</a>
+                <a href="<?= $closeUrl ?>" class="btn-mc btn-mc-outline-gray">Close</a>
             </div>
 
             <div class="profile-box">
-                <h3 class="profile-title">
-                    Dr. <?= htmlspecialchars($selectedDoctor['full_name']) ?> — <?= htmlspecialchars($selectedDoctor['specialization_name'] ?? 'General Specialist') ?>
-                </h3>
-                <p class="profile-bio">
-                    <?= !empty($selectedDoctor['bio']) ? nl2br(htmlspecialchars($selectedDoctor['bio'])) : 'Dedicated medical specialist committed to patient care.' ?>
-                </p>
+                <div class="profile-header-flex">
+                    <img src="<?= htmlspecialchars($selectedAvatarSrc) ?>" 
+                         alt="Dr. <?= htmlspecialchars($selectedDoctor['full_name']) ?>" 
+                         class="profile-avatar-lg">
+                    <div>
+                        <h3 class="profile-title">
+                            Dr. <?= htmlspecialchars($selectedDoctor['full_name']) ?> — <?= htmlspecialchars($selectedDoctor['specialization_name'] ?? 'General Specialist') ?>
+                        </h3>
+                        <p class="profile-bio">
+                            <?= !empty($selectedDoctor['bio']) ? nl2br(htmlspecialchars($selectedDoctor['bio'])) : 'Dedicated medical specialist committed to patient care.' ?>
+                        </p>
+                    </div>
+                </div>
                 <div class="profile-grid">
                     <div><strong>Qualifications:</strong> <?= htmlspecialchars($selectedDoctor['degree'] ?? 'N/A') ?></div>
                     <div><strong>Experience:</strong> <?= (int)($selectedDoctor['experience_years'] ?? 0) ?> years</div>
@@ -162,21 +284,41 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
                     <div><strong>Location:</strong> <?= htmlspecialchars($selectedDoctor['city_name'] ?? 'N/A') ?></div>
                 </div>
             </div>
+
             <form method="GET" action="book_appointment.php#booking-section" class="date-filter-form">
                 <input type="hidden" name="doctor_id" value="<?= $selectedDoctor['doctor_id'] ?>">
+                <?php if ($filterSpec > 0): ?><input type="hidden" name="specialization_id" value="<?= $filterSpec ?>"><?php endif; ?>
+                <?php if ($filterCity > 0): ?><input type="hidden" name="city_id" value="<?= $filterCity ?>"><?php endif; ?>
+                <?php if (!empty($filterKeyword)): ?><input type="hidden" name="keyword" value="<?= htmlspecialchars($filterKeyword) ?>"><?php endif; ?>
+                <?php if ($currentPage > 1): ?><input type="hidden" name="page" value="<?= $currentPage ?>"><?php endif; ?>
+
                 <div class="form-group">
                     <label class="form-label">Filter Schedule by Date:</label>
                     <input type="date" name="work_date" class="form-control" min="<?= date('Y-m-d') ?>" value="<?= htmlspecialchars($filterDate) ?>">
                 </div>
                 <button type="submit" class="btn-mc btn-mc-teal">Check Date</button>
                 <?php if (!empty($filterDate)): ?>
-                    <a href="book_appointment.php?doctor_id=<?= $selectedDoctor['doctor_id'] ?>#booking-section" class="btn-mc btn-mc-outline-gray">Show All Upcoming</a>
+                    <?php
+                        $showAllParams = array_filter([
+                            'specialization_id' => $filterSpec ?: null,
+                            'city_id'           => $filterCity ?: null,
+                            'keyword'           => $filterKeyword ?: null,
+                            'page'              => $currentPage > 1 ? $currentPage : null,
+                            'doctor_id'         => $selectedDoctor['doctor_id'],
+                        ]);
+                    ?>
+                    <a href="book_appointment.php?<?= http_build_query($showAllParams) ?>#booking-section" class="btn-mc btn-mc-outline-gray">Show All Upcoming</a>
                 <?php endif; ?>
             </form>
+
             <form method="POST" action="book_appointment.php" id="bookForm">
                 <input type="hidden" name="action" value="book">
                 <input type="hidden" name="doctor_id" value="<?= $selectedDoctor['doctor_id'] ?>">
                 <input type="hidden" name="schedule_id" id="selected_schedule_id" value="">
+                <input type="hidden" name="specialization_id" value="<?= $filterSpec ?>">
+                <input type="hidden" name="city_id" value="<?= $filterCity ?>">
+                <input type="hidden" name="keyword" value="<?= htmlspecialchars($filterKeyword) ?>">
+                <input type="hidden" name="page" value="<?= $currentPage ?>">
 
                 <div class="form-group" style="margin-bottom: 16px;">
                     <label class="form-label">
@@ -225,78 +367,6 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
             </form>
         </div>
     <?php endif; ?>
-    <div class="panel-card">
-        <div class="panel-header">
-            <span class="panel-title"> My Appointment History (<?= count($appointments) ?>)</span>
-        </div>
-
-        <div class="table-responsive">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Doctor</th>
-                        <th>Specialization</th>
-                        <th>Work Date & Shift</th>
-                        <th>Workplace</th>
-                        <th>Symptoms Note</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (count($appointments) > 0): ?>
-                        <?php foreach ($appointments as $appt): ?>
-                            <?php
-                                $statusClass = 'badge-pending';
-                                if ($appt['status'] === 'CONFIRMED') $statusClass = 'badge-confirmed';
-                                elseif ($appt['status'] === 'COMPLETED') $statusClass = 'badge-completed';
-                            ?>
-                            <tr>
-                                <td><strong>#<?= $appt['appointment_id'] ?></strong></td>
-                                <td>
-                                    <strong>Dr. <?= htmlspecialchars($appt['doctor_name']) ?></strong>
-                                    <span class="text-sub"><?= htmlspecialchars($appt['degree'] ?? '') ?></span>
-                                </td>
-                                <td><?= htmlspecialchars($appt['specialization_name'] ?? 'General') ?></td>
-                                <td>
-                                    <div><?= date('Y-m-d', strtotime($appt['work_date'])) ?></div>
-                                    <span class="text-sub"><?= date('H:i', strtotime($appt['start_time'])) ?> - <?= date('H:i', strtotime($appt['end_time'])) ?></span>
-                                </td>
-                                <td><?= htmlspecialchars($appt['work_place'] ?? '---') ?></td>
-                                <td style="max-width: 220px;">
-                                    <?= !empty($appt['symptoms_note']) ? htmlspecialchars($appt['symptoms_note']) : '<span class="text-muted-italic">No notes</span>' ?>
-                                </td>
-                                <td>
-                                    <span class="badge-pill <?= $statusClass ?>">
-                                        <?= htmlspecialchars($appt['status']) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <?php if ($appt['status'] === 'PENDING'): ?>
-                                        <form method="POST" action="book_appointment.php" style="display:inline;" 
-                                              onsubmit="return confirm('Are you sure you want to cancel appointment #<?= $appt['appointment_id'] ?>?');">
-                                            <input type="hidden" name="action" value="cancel">
-                                            <input type="hidden" name="appointment_id" value="<?= $appt['appointment_id'] ?>">
-                                            <button type="submit" class="btn-mc btn-mc-danger">Cancel</button>
-                                        </form>
-                                    <?php else: ?>
-                                        <span class="text-muted-italic">---</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="8" class="empty-cell">
-                                You have no appointment history yet. Select a doctor above to book!
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </main>
 
 <footer class="patient-footer">
@@ -313,6 +383,7 @@ $appointments = $apptManager->getPatientAppointments($patient_id);
         btn.style.color = '#ffffff';
         document.getElementById('selected_schedule_id').value = scheduleId;
     }
+
     const bookForm = document.getElementById('bookForm');
     if (bookForm) {
         bookForm.addEventListener('submit', function(e) {
