@@ -31,6 +31,7 @@ require_once '../includes/csrf.php';
 
         
         <form action="register_process.php" method="POST">
+            <?php echo csrfField(); ?>
             <div class="form-group">
                 <label>Full name</label>
                 <input type="text" name="full_name" required placeholder="Enter your full name">

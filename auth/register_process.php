@@ -15,6 +15,10 @@ function failRegister(string $message): void {
     header("Location: register.php");
     exit();
 }
+if(!csrfValid()){
+    failRegister(CSRF_ERROR_MESSAGE);
+}
+
 
 $fullName = trim($_POST['full_name'] ?? '');
 $email = trim($_POST['email']?? '');

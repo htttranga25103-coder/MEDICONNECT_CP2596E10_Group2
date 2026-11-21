@@ -24,14 +24,15 @@ require_once '../includes/csrf.php';
         
         <!-- Hiển thị thông báo lỗi/thành công -->
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
+            <div class="error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['success'])): ?>
-            <div class="success"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></div>
+            <div class="success"><?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></div>
         <?php endif; ?>
 
         <form action="login_process.php" method="POST">
+            <?php echo csrfField(); ?>
             <div class="form-group">
                 <label>Email address</label>
                 <input type="email" name="email" required placeholder="Enter your email address">
@@ -60,7 +61,7 @@ require_once '../includes/csrf.php';
             <button type="submit">Login</button>
         </form>
         <p style="text-align: center; margin-top:20px; font-size:14px;">
-            Don't have an account? <a href="register.php" style="color: #00b074; font-weght:bold; text-decoration: none;">Create an account</a>
+            Don't have an account? <a href="register.php" style="color: #00b074; font-weight:bold; text-decoration: none;">Create an account</a>
         </p>
 
     </div>

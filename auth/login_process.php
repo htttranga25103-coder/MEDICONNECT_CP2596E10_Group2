@@ -5,12 +5,17 @@ require_once '../includes/csrf.php';
 
 if($_SERVER['REQUEST_METHOD'] !== 'POST'){
     header("Location: login.php");
+    exit();
 }
 //hien loi roi quay lai form dang nhap
 function failLogin(string $message): void{
     $_SESSION['error'] = $message;
     header("Location: login.php");
     exit();
+}
+
+if(!csrfValid()){
+    failLogin(CSRF_ERROR_MESSAGE);
 }
 
 $email = trim($_POST['email']?? '');
@@ -26,7 +31,7 @@ try{
         SELECT u.*, r.role_name
         FROM users u 
         JOIN roles r ON u.role_id = r.role_id
-        WHERE u.email = ? AND i.is_active = 1
+        WHERE u.email = ? AND u.is_active = 1
     ");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
@@ -35,7 +40,7 @@ try{
     failLogin("Login failed. Please try again later.");
 }
 //thong bao loi khong lam lo thong tin
-if(!user || !password_verify($password, $user['password_hash'])|| $user['role_name'] !== $selectedRole){
+if(!$user || !password_verify($password, $user['password_hash'])|| $user['role_name'] !== $selectedRole){
     failLogin("Incorrect email, password or role!");
 }
 
@@ -56,7 +61,7 @@ $_SESSION['role_name'] = $user['role_name'];
     // }else{
     //     $_SESSION['errer'] = "Incorrect email or password!";
     //     
-        header("Location: login.php");
+        header("Location: index.php");
         exit();
    // }
 //}

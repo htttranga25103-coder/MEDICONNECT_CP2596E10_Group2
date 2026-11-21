@@ -82,8 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
     $phoneClean = preg_replace('/[\s.\-]/', '', $form['phone_number']);
     $error = '';
-
-    if ($form['full_name'] === '' || mb_strlen($form['full_name']) > 100) {
+    if(!csrfValid()) {
+        $error=CSRF_ERROR_MESSAGE;
+    }elseif($form['full_name'] === '' || mb_strlen($form['full_name']) > 100) {
         $error = "Please enter your full name (up to 100 characters).";
     } elseif ($phoneClean !== '' && !preg_match('/^\+?[0-9]{9,15}$/', $phoneClean)) {
         $error = "Phone number is incorrect (9-15 digits).";
@@ -128,7 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $newPass     = $_POST['new_password'] ?? '';
     $confirmPass = $_POST['confirm_password'] ?? '';
     $error = '';
-
+    if(!csrfValid()){
+        $error=CSRF_ERROR_MESSAGE;
+    }else{
     try {
         $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
         $stmt->execute([$userId]);
@@ -138,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         $row = false;
         $error = "Could not change your password. Please try again later.";
     }
-
+    }
     if ($error === '') {
         if (!$row || !password_verify($oldPass, $row['password_hash'])) {
             $error = "Current password is incorrect.";
@@ -227,6 +230,7 @@ $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
 
         <!-- Form cập nhật hồ sơ -->
         <form action="profile.php" method="POST">
+            <?php echo csrfField(); ?>
             <div class="form-group">
                 <label>Email address</label>
                 <input type="email" value="<?php echo e($userInfo['email']); ?>" disabled>
@@ -262,6 +266,7 @@ $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
         <!-- Form đổi mật khẩu -->
         <h3 class="section-title">Change password</h3>
         <form action="profile.php" method="POST">
+           <?php echo csrfField(); ?>
             <div class="form-group">
                 <label>Current password</label>
                 <input type="password" name="old_password" required autocomplete="current-password">
