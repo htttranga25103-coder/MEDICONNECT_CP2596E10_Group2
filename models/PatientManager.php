@@ -6,6 +6,7 @@ class PatientManager {
         $this->conn = $dbConnection;
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     }
+
     public function addPatient($data) {
         $full_name = trim($data['full_name']);
         $email = trim($data['email']);
@@ -30,6 +31,7 @@ class PatientManager {
             $stmtUser->bind_param("issss", $role_id, $email, $password, $full_name, $phone_number);
             $stmtUser->execute();
             $new_user_id = $this->conn->insert_id;
+
             $stmtPat = $this->conn->prepare("INSERT INTO patients (user_id, address, city_id, district_id, street_id, date_of_birth, gender) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmtPat->bind_param("isiiiss", $new_user_id, $address, $city_id, $district_id, $street_id, $date_of_birth, $gender);
             $stmtPat->execute();
@@ -42,6 +44,7 @@ class PatientManager {
             return ['status' => false, 'message' => $msg];
         }
     }
+
     public function updatePatient($data) {
         $patient_id = (int)$data['patient_id'];
         $full_name = trim($data['full_name']);
@@ -87,6 +90,7 @@ class PatientManager {
             return ['status' => false, 'message' => "Error updating patient: " . $e->getMessage()];
         }
     }
+
     public function deletePatient($patient_id) {
         $patient_id = (int)$patient_id;
 
@@ -103,7 +107,6 @@ class PatientManager {
             }
 
             $user_id = $pat['user_id'];
-            // Kiểm tra lịch sử khám
             $stmtCheck = $this->conn->prepare("SELECT COUNT(*) as total FROM appointments WHERE patient_id = ?");
             $stmtCheck->bind_param("i", $patient_id);
             $stmtCheck->execute();
@@ -132,7 +135,22 @@ class PatientManager {
             return ['status' => false, 'message' => "Error deleting patient: " . $e->getMessage()];
         }
     }
-    public function getPatients($keyword = '') {
+
+    public function countPatients($keyword = '') {
+        $searchParam = "%" . trim($keyword) . "%";
+        $sql = "SELECT COUNT(p.patient_id) AS total
+                FROM patients p
+                JOIN users u ON p.user_id = u.user_id
+                WHERE u.full_name LIKE ? OR u.email LIKE ? OR u.phone_number LIKE ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        return (int)($row['total'] ?? 0);
+    }
+
+    public function getPatients($keyword = '', $limit = 10, $offset = 0) {
         $searchParam = "%" . trim($keyword) . "%";
         $sql = "SELECT p.*, u.email, u.full_name, u.phone_number, u.is_active,
                        c.city_name, d.district_name, s.street_name
@@ -142,18 +160,22 @@ class PatientManager {
                 LEFT JOIN districts d ON p.district_id = d.district_id
                 LEFT JOIN streets s ON p.street_id = s.street_id
                 WHERE u.full_name LIKE ? OR u.email LIKE ? OR u.phone_number LIKE ?
-                ORDER BY p.patient_id DESC";
+                ORDER BY p.patient_id DESC
+                LIMIT ? OFFSET ?";
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
+        $limit = (int)$limit;
+        $offset = (int)$offset;
+        $stmt->bind_param("sssii", $searchParam, $searchParam, $searchParam, $limit, $offset);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+
     public function getAddressOptions() {
         return [
-            'cities' => $this->conn->query("SELECT city_id, city_name FROM cities ORDER BY city_name")->fetch_all(MYSQLI_ASSOC),
+            'cities'    => $this->conn->query("SELECT city_id, city_name FROM cities ORDER BY city_name")->fetch_all(MYSQLI_ASSOC),
             'districts' => $this->conn->query("SELECT district_id, district_name FROM districts ORDER BY district_name")->fetch_all(MYSQLI_ASSOC),
-            'streets' => $this->conn->query("SELECT street_id, street_name FROM streets ORDER BY street_name")->fetch_all(MYSQLI_ASSOC)
+            'streets'   => $this->conn->query("SELECT street_id, street_name FROM streets ORDER BY street_name")->fetch_all(MYSQLI_ASSOC),
         ];
     }
 }

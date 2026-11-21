@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/MyConnection.php';
 require_once '../models/PatientManager.php';
+
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'ADMIN') {
     header("Location: ../login.php");
     exit();
@@ -9,6 +10,7 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'ADMIN') {
 
 $conn = MyConnection::connectDatabase();
 $patientManager = new PatientManager($conn);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $result = null;
@@ -25,16 +27,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
     }
 
-    header("Location: manage_patients.php");
+    $redirectParams = array_filter([
+        'keyword' => !empty($_POST['current_keyword']) ? trim($_POST['current_keyword']) : null,
+        'page'    => !empty($_POST['current_page']) && (int)$_POST['current_page'] > 1 ? (int)$_POST['current_page'] : null,
+    ]);
+    $redirectUrl = "manage_patients.php" . (!empty($redirectParams) ? "?" . http_build_query($redirectParams) : "");
+
+    header("Location: " . $redirectUrl);
     exit();
 }
+
 $addressData = $patientManager->getAddressOptions();
-$cities = $addressData['cities'];
-$districts = $addressData['districts'];
-$streets = $addressData['streets'];
+$cities      = $addressData['cities'];
+$districts   = $addressData['districts'];
+$streets     = $addressData['streets'];
 
 $keyword = trim($_GET['keyword'] ?? '');
-$patients = $patientManager->getPatients($keyword);
+
+$limit         = 7;
+$currentPage   = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$totalPatients = $patientManager->countPatients($keyword);
+$totalPages    = max(1, (int)ceil($totalPatients / $limit));
+
+if ($currentPage > $totalPages) {
+    $currentPage = $totalPages;
+}
+$offset   = ($currentPage - 1) * $limit;
+$patients = $patientManager->getPatients($keyword, $limit, $offset);
+
+$startItem = $totalPatients > 0 ? ($offset + 1) : 0;
+$endItem   = min($offset + $limit, $totalPatients);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,7 +64,7 @@ $patients = $patientManager->getPatients($keyword);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Patient Management</title>
-    <link rel="stylesheet" href="../assets/css/admin_style.css">
+    <link rel="stylesheet" href="../assets/css/admin_style.css?v=3">
 </head>
 <body>
 
@@ -57,6 +79,7 @@ $patients = $patientManager->getPatients($keyword);
             <li><a href="../articles/manage.php">News Management</a></li>
         </ul>
     </aside>
+
     <div class="main-area">
         <header class="topbar">
             <div class="topbar-user">
@@ -69,6 +92,16 @@ $patients = $patientManager->getPatients($keyword);
 
         <main class="content-container">
             <h2 class="page-title">Patient Management</h2>
+            <div class="stat-summary-row">
+                <div class="stat-summary-card">
+                    <div class="stat-summary-label">Total accounts</div>
+                    <div class="stat-summary-value-row">
+                        <span class="stat-summary-number"><?= number_format($totalPatients) ?></span>
+                        <span class="stat-summary-sub">All patients</span>
+                    </div>
+                </div>
+            </div>
+
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert-box alert-success">
                     <span><?= htmlspecialchars($_SESSION['success']) ?></span>
@@ -84,6 +117,7 @@ $patients = $patientManager->getPatients($keyword);
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
+
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title" id="form_header">Add New Patient</span>
@@ -93,6 +127,8 @@ $patients = $patientManager->getPatients($keyword);
                     <input type="hidden" name="action" id="form_action" value="add">
                     <input type="hidden" name="patient_id" id="patient_id" value="">
                     <input type="hidden" name="user_id" id="user_id" value="">
+                    <input type="hidden" name="current_keyword" value="<?= htmlspecialchars($keyword) ?>">
+                    <input type="hidden" name="current_page" value="<?= $currentPage ?>">
 
                     <div class="form-grid">
                         <div class="form-group">
@@ -190,7 +226,7 @@ $patients = $patientManager->getPatients($keyword);
 
             <div class="panel-card">
                 <div class="panel-header">
-                    <span class="panel-title">Patient List (<?= count($patients) ?>)</span>
+                    <span class="panel-title">Patient List (<?= $totalPatients ?>)</span>
 
                     <form method="GET" action="manage_patients.php" class="search-bar">
                         <input type="text" name="keyword" class="form-control" placeholder="Search name, email, phone..." value="<?= htmlspecialchars($keyword) ?>">
@@ -210,6 +246,7 @@ $patients = $patientManager->getPatients($keyword);
                                 <th>Email / Phone</th>
                                 <th>DOB / Gender</th>
                                 <th>Address</th>
+                                <th>Created on</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -220,6 +257,7 @@ $patients = $patientManager->getPatients($keyword);
                                     <?php
                                         $addrParts = array_filter([$row['address'], $row['street_name'], $row['district_name'], $row['city_name']]);
                                         $fullAddress = !empty($addrParts) ? implode(', ', $addrParts) : '<span class="text-muted-italic">Not updated</span>';
+                                        $createdDate = !empty($row['created_at']) ? date('d/m/Y', strtotime($row['created_at'])) : '---';
                                     ?>
                                     <tr>
                                         <td><strong>#<?= $row['patient_id'] ?></strong></td>
@@ -232,7 +270,8 @@ $patients = $patientManager->getPatients($keyword);
                                             <div><?= !empty($row['date_of_birth']) ? date('Y-m-d', strtotime($row['date_of_birth'])) : '---' ?></div>
                                             <span class="text-sub"><?= htmlspecialchars($row['gender'] ?? '') ?></span>
                                         </td>
-                                        <td style="max-width: 240px;"><?= $fullAddress ?></td>
+                                        <td style="max-width: 220px;"><?= $fullAddress ?></td>
+                                        <td><?= $createdDate ?></td>
                                         <td>
                                             <?= ($row['is_active'] == 1)
                                                 ? '<span class="badge-pill badge-active">Active</span>'
@@ -253,7 +292,7 @@ $patients = $patientManager->getPatients($keyword);
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="7" class="empty-cell">
+                                    <td colspan="8" class="empty-cell">
                                         No patient records found.
                                     </td>
                                 </tr>
@@ -261,7 +300,65 @@ $patients = $patientManager->getPatients($keyword);
                         </tbody>
                     </table>
                 </div>
-            </div>
+
+                <?php
+                $buildPageUrl = function(int $page) use ($keyword): string {
+                    $params = array_filter([
+                        'keyword' => $keyword !== '' ? $keyword : null,
+                        'page'    => $page > 1 ? $page : null,
+                    ]);
+                    return 'manage_patients.php' . (!empty($params) ? '?' . http_build_query($params) : '');
+                };
+
+                $pageNumbers = [];
+                if ($totalPages <= 5) {
+                    $pageNumbers = range(1, $totalPages);
+                } else {
+                    $pageNumbers[] = 1;
+                    if ($currentPage > 3) {
+                        $pageNumbers[] = '...';
+                    }
+                    for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++) {
+                        $pageNumbers[] = $i;
+                    }
+                    if ($currentPage < $totalPages - 2) {
+                        $pageNumbers[] = '...';
+                    }
+                    $pageNumbers[] = $totalPages;
+                }
+                ?>
+
+                <div class="table-footer-pagination">
+                    <div class="pagination-info">
+                        Showing <?= number_format($startItem) ?>–<?= number_format($endItem) ?> of <?= number_format($totalPatients) ?> accounts
+                    </div>
+
+                    <div class="pagination-controls">
+                        <span class="per-page-label"><?= $limit ?> / page</span>
+
+                        <?php if ($currentPage > 1): ?>
+                            <a href="<?= $buildPageUrl($currentPage - 1) ?>" class="pg-btn">Previous</a>
+                        <?php else: ?>
+                            <span class="pg-btn disabled">Previous</span>
+                        <?php endif; ?>
+
+                        <?php foreach ($pageNumbers as $p): ?>
+                            <?php if ($p === '...'): ?>
+                                <span class="pg-btn dots">...</span>
+                            <?php else: ?>
+                                <a href="<?= $buildPageUrl($p) ?>" class="pg-btn <?= ($p === $currentPage) ? 'active' : '' ?>">
+                                    <?= $p ?>
+                                </a>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+
+                        <?php if ($currentPage < $totalPages): ?>
+                            <a href="<?= $buildPageUrl($currentPage + 1) ?>" class="pg-btn">Next</a>
+                        <?php else: ?>
+                            <span class="pg-btn disabled">Next</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
         </main>
 
         <footer class="admin-footer">
@@ -285,6 +382,7 @@ $patients = $patientManager->getPatients($keyword);
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const passwordLabel = document.getElementById('password_label');
+
     function editPatient(data) {
         formAction.value = 'edit';
         document.getElementById('patient_id').value = data.patient_id;
@@ -342,6 +440,7 @@ $patients = $patientManager->getPatients($keyword);
         passwordLabel.innerHTML = 'Password <span class="req">*</span>';
 
         formHeader.style.color = '#1e293b';
+        formHeader.innerHTML = 'Add New Patient';
         formHeader.innerHTML = 'Add New Patient';
         btnSubmit.innerHTML = 'Add Patient';
         btnCancel.classList.add('d-none');
