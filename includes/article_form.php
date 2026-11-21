@@ -1,3 +1,5 @@
+<?php
+?>
 <form action = "<?php echo e($formAction); ?>" methond = "POST">
     <?php echo csrfFile(); ?>
         <div class="form-group-custom">
@@ -14,12 +16,12 @@
             <select name = "category_id">
                 <option value ="">No category</option>
                 <?php foreach($categories as $cat): ?>
-                    <option value ="<?php echo e($cat['category_id']); ?>
-                    "<?php echo(string)$form["category_id"]===(string)$cat['category_id'] ? 'selected' : '';?>>
-                    <?php echo e($cat['name']); ?></option>
-                        <?php if(empty($categories)): ?>
-                            <small style="color:#666;">No categories exist yet, so the article will have no category. </small>
-                        <?php endif; ?>
+                    <option value="<?php echo e($cat['category_id']); ?>" <?php echo (string) $form['category_id'] === (string) $cat['category_id'] ? 'selected' : ''; ?>>
+                        <?php echo e($cat['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         </div>
          <div class="form-group-custom">
             <label>Short Summary:</label>
@@ -37,4 +39,4 @@
              <?php if (!empty($cancelUrl)): ?>
         <a href="<?php echo e($cancelUrl); ?>" style="margin-left: 12px; color: #666;">Cancel</a>
         <?php endif; ?>
-</form>
+     </form>
