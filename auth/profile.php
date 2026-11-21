@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+require_once '../includes/csrf.php';
 
 function e($value): string{
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');

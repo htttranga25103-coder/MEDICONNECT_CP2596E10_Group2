@@ -2,6 +2,7 @@
 session_start();
 require_once '../config/database.php';
 require_once '../includes/functions.php';
+require_once '../includes/csrf.php';
 
 requireStaff();   // chỉ ADMIN và DOCTOR được vào
 $userId  = (int) $_SESSION['user_id'];

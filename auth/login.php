@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once '../includes/csrf.php';
 ?>
 
 <!DOCTYPE html>

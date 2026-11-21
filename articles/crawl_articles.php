@@ -1,16 +1,15 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
 require_once '../config/database.php'; 
 
 // dong lai test kiểm tra quyền (Chỉ Admin hoặc Doctor mới được phép crawl dữ liệu)
-// if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])) {
-//     header("Location: ../auth/login.php");
-//     exit();
-// } 
+ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])) {
+     header("Location: ../auth/login.php");
+     exit();
+} 
+$countAdded = 0;
 
 $defaultAuthorId = 1; 
 
