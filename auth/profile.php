@@ -179,6 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 // Avatar: chỉ hiện ảnh khi là link https, còn lại hiện chữ cái đầu của tên
 $showAvatarImg = preg_match('#^https://#i', (string)$userInfo['avatar_url']) === 1;
 $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
+$isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); // Thêm dòng này
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -186,105 +187,152 @@ $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - MediConnect</title>
-    <link rel="stylesheet" href="../assets/css/auth_style.css">
-    <style>
-        .profile-card { width: 520px; max-width: 95%; margin: 40px auto; padding: 30px; box-sizing: border-box; }
-        .profile-nav { text-align: right; font-size: 14px; margin-bottom: 10px; }
-        .profile-nav a { color: #00b074; font-weight: bold; text-decoration: none; margin-left: 12px; }
-        .profile-top { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .avatar { width: 64px; height: 64px; border-radius: 50%; background: #00b074; color: #fff; font-size: 28px; font-weight: bold; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-meta { font-size: 13px; color: #666; }
-        .profile-meta strong { color: #333; }
-        .section-title { font-size: 16px; color: #00b074; margin: 25px 0 10px; border-top: 1px solid #eee; padding-top: 20px; }
-        .field-hint { color: #666; font-size: 11px; }
-        input:disabled { background: #f1f3f4; color: #666; cursor: not-allowed; }
-    </style>
+    <link rel="stylesheet" href="../assets/css/article_style.css">
 </head>
 <body>
-    <div class="login-card profile-card">
-        <div class="profile-nav">
-            <a href="../index.php">Home</a>
-            <a href="logout.php">Log out</a>
-        </div>
+<?php if ($isStaff): ?>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <a href="../index.php" class="sidebar-brand">MediConnect</a>
+            <ul class="sidebar-menu">
+                <li><a href="../index.php">Home</a></li>
+                <li><a href="../articles/news.php">Public News</a></li>
+                <li><a href="../articles/manage.php">Manage Articles</a></li>
+                <li><a href="profile.php" class="active">My Profile</a></li>
+            </ul>
+        </aside>
 
-        <h2>MY PROFILE</h2>
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-user">
+                    <span>Welcome, <strong><?php echo e($userInfo['full_name']); ?></strong> (<?php echo e($userInfo['role_name']); ?>)</span>
+                    <a href="logout.php" class="btn-logout">Log out</a>
+                </div>
+            </header>
+            <main class="content-container">
+<?php else: ?>
+    <header class="public-navbar">
+        <a href="../index.php" class="public-brand">MediConnect</a>
+        <nav class="public-nav-links">
+            <a href="../index.php" class="nav-item">Home</a>
+            <a href="../articles/news.php" class="nav-item">All Articles</a>
+            <a href="profile.php" class="nav-item active">My Profile</a>
+            <a href="logout.php" class="btn-logout">Log out</a>
+        </nav>
+    </header>
+    <main class="article-container" style="max-width: 780px;">
+<?php endif; ?>
+
+        <h1 class="page-title">My Profile</h1>
 
         <?php if ($message !== ''): ?>
-            <div class="<?php echo $messageType === 'success' ? 'success' : 'error'; ?>"><?php echo e($message); ?></div>
+            <div class="alert-box <?php echo $messageType === 'success' ? 'alert-success' : 'alert-error'; ?>">
+                <span><?php echo e($message); ?></span>
+                <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            </div>
         <?php endif; ?>
 
-        <div class="profile-top">
-            <div class="avatar">
-                <?php if ($showAvatarImg): ?>
-                    <img src="<?php echo e($userInfo['avatar_url']); ?>" alt="Avatar" referrerpolicy="no-referrer">
-                <?php else: ?>
-                    <?php echo e($initial); ?>
-                <?php endif; ?>
+        <!-- Thông tin tài khoản & Cập nhật hồ sơ -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="author-avatar" style="background-color: #168077;">
+                        <?php if ($showAvatarImg): ?>
+                            <img src="<?php echo e($userInfo['avatar_url']); ?>" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">
+                        <?php else: ?>
+                            <?php echo e($initial); ?>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <h2 class="panel-title" style="margin-bottom: 2px;"><?php echo e($userInfo['full_name']); ?></h2>
+                        <span class="article-category-tag" style="margin-bottom: 0;"><?php echo e($userInfo['role_name']); ?></span>
+                    </div>
+                </div>
             </div>
-            <div class="profile-meta">
-                <div><strong><?php echo e($userInfo['full_name']); ?></strong></div>
-                <div>Role: <?php echo e($userInfo['role_name']); ?></div>
-            </div>
+
+            <form action="profile.php" method="POST">
+                <?php echo csrfField(); ?>
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Email address</label>
+                        <input type="email" class="form-control" value="<?php echo e($userInfo['email']); ?>" readonly>
+                        <span class="text-sub">Email is used to log in and cannot be changed.</span>
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Full name <span class="req">*</span></label>
+                        <input type="text" name="full_name" class="form-control" required maxlength="100" value="<?php echo e($form['full_name']); ?>">
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Phone number</label>
+                        <input type="text" name="phone_number" class="form-control" maxlength="20" value="<?php echo e($form['phone_number']); ?>">
+                    </div>
+
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Avatar URL / Filename</label>
+                        <input type="text" name="avatar_url" class="form-control" maxlength="255" value="<?php echo e($form['avatar_url']); ?>" placeholder="https://... or image file name">
+                        <span class="text-sub">Leave empty to use the default avatar.</span>
+                    </div>
+
+                    <?php if ($hasPatient): ?>
+                    <div class="form-group col-span-4">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" maxlength="255" value="<?php echo e($form['address']); ?>" placeholder="Street, ward, province/city">
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" name="update_profile" class="btn-mc btn-mc-teal">Save changes</button>
+                </div>
+            </form>
         </div>
 
-        <!-- Form cập nhật hồ sơ -->
-        <form action="profile.php" method="POST">
-            <?php echo csrfField(); ?>
-            <div class="form-group">
-                <label>Email address</label>
-                <input type="email" value="<?php echo e($userInfo['email']); ?>" disabled>
-                <small class="field-hint">Email is used to log in and cannot be changed.</small>
+        <!-- Đổi mật khẩu -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2 class="panel-title">Change Password</h2>
             </div>
 
-            <div class="form-group">
-                <label>Full name</label>
-                <input type="text" name="full_name" required maxlength="100" value="<?php echo e($form['full_name']); ?>">
-            </div>
+            <form action="profile.php" method="POST">
+                <?php echo csrfField(); ?>
+                <div class="form-grid">
+                    <div class="form-group col-span-4">
+                        <label class="form-label">Current password <span class="req">*</span></label>
+                        <input type="password" name="old_password" class="form-control" required autocomplete="current-password">
+                    </div>
 
-            <div class="form-group">
-                <label>Phone number</label>
-                <input type="text" name="phone_number" maxlength="20" value="<?php echo e($form['phone_number']); ?>">
-            </div>
+                    <div class="form-group col-span-2">
+                        <label class="form-label">New password <span class="req">*</span></label>
+                        <input type="password" name="new_password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password">
+                        <span class="text-sub">At least 8 characters, with letters and numbers.</span>
+                    </div>
 
-            <?php if ($hasPatient): ?>
-            <div class="form-group">
-                <label>Address</label>
-                <input type="text" name="address" maxlength="255" value="<?php echo e($form['address']); ?>" placeholder="Street, ward, province/city">
-            </div>
-            <?php endif; ?>
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Confirm new password <span class="req">*</span></label>
+                        <input type="password" name="confirm_password" class="form-control" required minlength="8" maxlength="72" autocomplete="new-password">
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label>Avatar</label>
-                <input type="text" name="avatar_url" maxlength="255" value="<?php echo e($form['avatar_url']); ?>" placeholder="https://... or image file name">
-                <small class="field-hint">Leave empty to use the default avatar.</small>
-            </div>
+                <div class="form-actions">
+                    <button type="submit" name="change_password" class="btn-mc btn-mc-teal">Change password</button>
+                </div>
+            </form>
+        </div>
 
-            <button type="submit" name="update_profile">Save changes</button>
-        </form>
-
-        <!-- Form đổi mật khẩu -->
-        <h3 class="section-title">Change password</h3>
-        <form action="profile.php" method="POST">
-           <?php echo csrfField(); ?>
-            <div class="form-group">
-                <label>Current password</label>
-                <input type="password" name="old_password" required autocomplete="current-password">
-            </div>
-
-            <div class="form-group">
-                <label>New password</label>
-                <input type="password" name="new_password" required minlength="8" maxlength="72" autocomplete="new-password">
-                <small class="field-hint">At least 8 characters, with letters and numbers.</small>
-            </div>
-
-            <div class="form-group">
-                <label>Confirm new password</label>
-                <input type="password" name="confirm_password" required minlength="8" maxlength="72" autocomplete="new-password">
-            </div>
-
-            <button type="submit" name="change_password">Change password</button>
-        </form>
+<?php if ($isStaff): ?>
+            </main>
+            <footer class="admin-footer">
+                <span>&copy; 2026 MediConnect. All rights reserved.</span>
+            </footer>
+        </div>
     </div>
+<?php else: ?>
+    </main>
+    <footer class="admin-footer">
+        <span>&copy; 2026 MediConnect. All rights reserved.</span>
+    </footer>
+<?php endif; ?>
 </body>
 </html>

@@ -1,23 +1,26 @@
 <?php
 error_reporting(E_ALL);
-
 session_start();
 require_once 'config/database.php';
+require_once 'includes/functions.php';
 
 try {
-    // Truy vấn lấy danh sách 5 bài viết mới nhất kèm theo tên danh mục và tên tác giả
+    // Lấy 5 bài viết mới nhất kèm danh mục và tác giả
     $stmt = $pdo->query("
-        SELECT a.*, ac.name as category_name, u.full_name as author_name
+        SELECT a.*, ac.name AS category_name, u.full_name AS author_name
         FROM articles a
         LEFT JOIN article_categories ac ON a.category_id = ac.category_id
         JOIN users u ON a.author_id = u.user_id
-        ORDER BY a.created_at DESC
+        ORDER BY a.created_at DESC, a.article_id DESC
         LIMIT 5
     ");
     $articles = $stmt->fetchAll();
 } catch (\PDOException $e) {
-    die("SQL query error: " . $e->getMessage());
+    error_log("Home load articles error: " . $e->getMessage());
+    die("Unable to load featured articles. Please try again later.");
 }
+
+$isStaff = isset($_SESSION['user_id']) && in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -25,63 +28,88 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - MediConnect</title>
-    <!-- Gọi file CSS chung từ thư mục assets -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style> 
-        body { display: block; background-color: #f4f6f9; padding: 20px; font-family: Arial, sans-serif; }
-        .main-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00b074; padding-bottom: 15px; margin-bottom: 20px; }
-        .article-card { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .article-card:last-child { border-bottom: none; }
-        .article-title { color: #00b074; text-decoration: none; font-size: 18px; font-weight: bold; }
-        .article-title:hover { text-decoration: underline; }
-        .meta-info { font-size: 13px; color: #666; margin-top: 5px; }
-        .btn-auth { background: #00b074; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="assets/css/article_style.css">
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-nav">
-            <h1 style="color: #00b074; margin: 0;">MediConnect</h1>
-            <div>
-                <!-- sang trang danh sách đầy đủ articles/news.php -->
-                <a href="articles/news.php" style="margin-right: 15px; text-decoration: none; color: #00b074; font-weight: bold;">View all articles</a>
+    <!-- Thanh điều hướng đồng bộ màu -->
+    <header class="public-navbar">
+        <a href="index.php" class="public-brand">MediConnect</a>
+        <nav class="public-nav-links">
+            <a href="index.php" class="nav-item active">Home</a>
+            <a href="articles/news.php" class="nav-item">All Articles</a>
 
-                <?php if (isset($_SESSION['user_id'])): ?>
-                    <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? ''); ?></strong>!</span>
-                    <a href = "auth/profile.php" class="btn-auth" style = "background: #17a2b8; color: white;">Profile</a>
-                    <?php if (in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])): ?>
-                        <a href="articles/manage.php" class="btn-auth" style="background: #ffc107; color: #333;">Manage</a>
-                        <a href="articles/crawl_articles.php" class="btn-auth" style="background: #17a2b8; color: white;">Articles update auto</a>
-                        <?php endif; ?>
-
-                    <a href="auth/logout.php" class="btn-auth" style="background: #00b074;">Log out</a>
-                <?php else: ?>
-                    <a href="auth/login.php" class="btn-auth">Log in</a>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="auth/profile.php" class="nav-item">Profile</a>
+                <?php if ($isStaff): ?>
+                    <a href="articles/manage.php" class="nav-item">Manage Articles</a>
+                    <a href="articles/crawl_articles.php" class="nav-item">Auto Update</a>
                 <?php endif; ?>
-            </div>
+                <span>Hi, <strong><?php echo e($_SESSION['full_name'] ?? ''); ?></strong></span>
+                <a href="auth/logout.php" class="btn-logout">Log out</a>
+            <?php else: ?>
+                <a href="auth/login.php" class="btn-mc btn-mc-teal">Log in</a>
+            <?php endif; ?>
+        </nav>
+    </header>
+
+    <!-- Nội dung chính -->
+    <main class="article-container">
+        <div class="panel-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 18px;">
+            <h1 class="page-title" style="margin-bottom: 0;">Featured Medical Articles</h1>
+            <a href="articles/news.php" class="btn-mc btn-mc-outline-gray">View All Articles &rarr;</a>
         </div>
 
-        <!-- bài viet noi bat -->
-        <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
-        
         <?php if (!empty($articles)): ?>
-            <?php foreach ($articles as $art): ?>
-                <div class="article-card">
-                    <a href="articles/detail.php?id=<?php echo $art['article_id']; ?>" class="article-title">
-                        <?php echo htmlspecialchars($art['title']); ?>
-                    </a>
-                    <div class="meta-info">
-                        Category: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'General'); ?></strong> | 
-                        Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
-                        Date Published: <?php echo $art['created_at']; ?>
-                    </div>
-                    <p style="color: #444; margin-top: 8px;"><?php echo htmlspecialchars($art['summary'] ?? ''); ?></p>
-                </div>
-            <?php endforeach; ?>
+            <div class="article-list">
+                <?php foreach ($articles as $art): ?>
+                    <?php
+                        // Index nằm ở thư mục gốc nên giữ nguyên đường dẫn uploads/... hoặc https://...
+                        $thumb = ltrim((string)($art['thumbnail_url'] ?? ''), '/');
+                    ?>
+                    <article class="article-card">
+                        <?php if ($thumb !== ''): ?>
+                            <a href="articles/detail.php?id=<?php echo (int)$art['article_id']; ?>" class="article-thumb-wrap">
+                                <img src="<?php echo e($thumb); ?>" alt="<?php echo e($art['title']); ?>" class="article-thumb">
+                            </a>
+                        <?php endif; ?>
+
+                        <div class="article-body">
+                            <span class="article-category-tag">
+                                <?php echo e($art['category_name'] ?? 'General'); ?>
+                            </span>
+
+                            <a href="articles/detail.php?id=<?php echo (int)$art['article_id']; ?>" class="article-title">
+                                <?php echo e($art['title']); ?>
+                            </a>
+
+                            <div class="article-meta">
+                                <span>Author: <strong><?php echo e($art['author_name']); ?></strong></span>
+                                <span>&bull;</span>
+                                <span>Published: <?php echo e($art['created_at']); ?></span>
+                            </div>
+
+                            <p class="article-summary">
+                                <?php echo e($art['summary'] ?? ''); ?>
+                            </p>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         <?php else: ?>
-            <p style="color: #666; font-style: italic;">No articles found in the database</p>
+            <div class="panel-card">
+                <p class="text-muted-italic">No articles found in the database.</p>
+            </div>
         <?php endif; ?>
-    </div>
+    </main>
+
+    <footer class="admin-footer">
+        <span>&copy; 2026 MediConnect. All rights reserved.</span>
+        <div class="footer-links">
+            <a href="articles/news.php">Medical News</a>
+            <?php if ($isStaff): ?>
+                <a href="articles/manage.php">Author Portal</a>
+            <?php endif; ?>
+        </div>
+    </footer>
 </body>
 </html>

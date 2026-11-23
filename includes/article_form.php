@@ -1,9 +1,9 @@
 <?php
 ?>
-<form action = "<?php echo e($formAction); ?>" methond = "POST">
+<form action = "<?php echo e($formAction); ?>" method = "POST">
     <?php echo csrfField(); ?>
         <div class="form-group-custom">
-            <label>Article title:</label>
+            <lable>Article title:</lable>
             <input type = "text" name = "title" required maxlength = "255" value="<?php echo e($form['title']); ?>">
         </div>
         <div class="form-group-custom">
@@ -12,7 +12,7 @@
             "<?php echo e($form['slug']); ?>" placeholder = "Leave empty to create it from the title">
         </div>
         <div class="form-group-custom">
-            <lable>Category Articles: </label>
+            <lable>Category Articles: </lable>
             <select name = "category_id">
                 <option value ="">No category</option>
                 <?php foreach($categories as $cat): ?>
@@ -22,9 +22,8 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        </div>
          <div class="form-group-custom">
-            <label>Short Summary:</label>
+            <lable>Short Summary:</label>
             <textarea name="summary" rows="3" maxlength="1000"><?php echo e($form['summary']); ?></textarea>
         </div>
         <div class="form-group-custom">

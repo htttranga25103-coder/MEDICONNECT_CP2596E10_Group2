@@ -32,25 +32,28 @@ try {
     error_log("Load categories error: " . $e->getMessage());
     $categories = [];
 }
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_article'])) {
     foreach ($form as $key => $unused) {
         $form[$key] = trim($_POST[$key] ?? '');
     }
     $error = '';
-    try {
-        [$data, $error] = parseArticleForm($pdo, $_POST);
-        if ($error === '') {
-            $stmt = $pdo->prepare("INSERT INTO articles (category_id, author_id, title, slug, summary, content, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['category_id'], $userId, $data['title'], $data['slug'], $data['summary'], $data['content'], $data['thumbnail_url']]);
-            redirectWithFlash('success', "Article added successfully!");
-        }
-    } catch (\PDOException $e) {
-        if (($e->errorInfo[1] ?? 0) == 1062) {
-            $error = "This slug is already used by another article.";
-        } else {
-            error_log("Create article error: " . $e->getMessage());
-            $error = "Could not add the article. Please try again later.";
+    if (!csrfValid()) {
+        $error = CSRF_ERROR_MESSAGE;
+    } else {
+        try {
+            [$data, $error] = parseArticleForm($pdo, $_POST);
+            if ($error === '') {
+                $stmt = $pdo->prepare("INSERT INTO articles (category_id, author_id, title, slug, summary, content, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$data['category_id'], $userId, $data['title'], $data['slug'], $data['summary'], $data['content'], $data['thumbnail_url']]);
+                redirectWithFlash('success', "Article added successfully!");
+            }
+        } catch (\PDOException $e) {
+            if (($e->errorInfo[1] ?? 0) == 1062) {
+                $error = "This slug is already used by another article.";
+            } else {
+                error_log("Create article error: " . $e->getMessage());
+                $error = "Could not add the article. Please try again later.";
+            }
         }
     }
     $message     = $error;
@@ -61,6 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article'])) {
     $deleteId = (int)($_POST['article_id'] ?? 0);
     $backPage = max(1, (int)($_POST['page'] ?? 1));
     $backUrl  = 'manage.php' . ($backPage > 1 ? '?page=' . $backPage : '');
+
+    if (!csrfValid()) {
+        redirectWithFlash('error', CSRF_ERROR_MESSAGE, $backUrl);
+    }
+
     try {
         $stmt = $pdo->prepare("SELECT article_id, author_id FROM articles WHERE article_id = ?");
         $stmt->execute([$deleteId]);
@@ -81,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article'])) {
         $messageType = 'error';
     }
 }
-
 $articles      = [];
 $totalArticles = 0;
 $totalPages    = 1;
@@ -156,7 +163,7 @@ $submitLabel = 'Post an article';
             </header>
 
             <main class="content-container">
-                <h1 class="page-title">Manage & Add New Article</h1>
+                <h1 class="page-title">Manage Article</h1>
 
                 <?php if ($message !== ''): ?>
                     <div class="alert-box <?php echo $messageType === 'success' ? 'alert-success' : 'alert-error'; ?>">
