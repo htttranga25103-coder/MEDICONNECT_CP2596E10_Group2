@@ -4,14 +4,16 @@ require_once '../config/database.php';
 require_once '../includes/functions.php';
 require_once '../includes/csrf.php';
 
-requireStaff();   // chỉ ADMIN và DOCTOR được vào
+requireStaff();
 
-// Hiện thông báo đơn giản rồi dừng (dùng cho lỗi không tìm thấy / không có quyền)
 function stopWithMessage(int $code, string $text): void {
     http_response_code($code);
-    echo '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>MediConnect</title></head><body>'
-       . '<div style="max-width:600px;margin:50px auto;font-family:Arial,sans-serif;">'
-       . '<p>' . e($text) . '</p><a href="manage.php">&larr; Back to manage articles</a></div></body></html>';
+    echo '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>MediConnect</title>'
+       . '<link rel="stylesheet" href="../assets/css/article_style.css"></head><body>'
+       . '<div class="article-container"><div class="panel-card">'
+       . '<div class="alert-box alert-error"><span>' . e($text) . '</span></div>'
+       . '<a href="manage.php" class="btn-mc btn-mc-outline-gray">&larr; Back to manage articles</a>'
+       . '</div></div></body></html>';
     exit();
 }
 
@@ -31,7 +33,6 @@ try {
 if (!$article) {
     stopWithMessage(404, "The article does not exist.");
 }
-// Kiểm tra quyền ở phía server: Admin sửa mọi bài, Doctor chỉ sửa bài của mình
 if (!canManageArticle($article)) {
     stopWithMessage(403, "You do not have permission to edit this article.");
 }
@@ -39,7 +40,6 @@ if (!canManageArticle($article)) {
 $message     = '';
 $messageType = '';
 
-// Giá trị hiển thị trong form (mặc định lấy từ database)
 $form = [
     'title'         => $article['title'],
     'slug'          => $article['slug'],
@@ -51,7 +51,7 @@ $form = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_article'])) {
     foreach ($form as $key => $unused) {
-        $form[$key] = trim($_POST[$key] ?? '');   // giữ lại nội dung đã gõ nếu có lỗi
+        $form[$key] = trim($_POST[$key] ?? '');
     }
     $error = '';
     try {
@@ -87,23 +87,55 @@ $cancelUrl   = 'manage.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Article - MediConnect</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/article_style.css">
-    <style>
-        .msg-error { background: #fce8e6; color: #c5221f; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
-    </style>
 </head>
 <body>
-    <div class="main-container" style="max-width: 800px;">
-        <h2>Edit article</h2>
-        <a href="manage.php">&larr; Back to manage articles</a> | <a href="detail.php?id=<?php echo e($articleId); ?>">View article</a>
-        <hr style="margin: 20px 0;">
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <a href="../index.php" class="sidebar-brand">MediConnect</a>
+            <ul class="sidebar-menu">
+                <li><a href="../index.php">Home</a></li>
+                <li><a href="news.php">Public News</a></li>
+                <li><a href="manage.php" class="active">Manage Articles</a></li>
+                <li><a href="../auth/profile.php">My Profile</a></li>
+            </ul>
+        </aside>
 
-        <?php if ($message !== ''): ?>
-            <div class="msg-error"><?php echo e($message); ?></div>
-        <?php endif; ?>
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-user">
+                    <span>Welcome, <strong><?php echo e($_SESSION['full_name'] ?? 'Author'); ?></strong> (<?php echo e($_SESSION['role_name'] ?? ''); ?>)</span>
+                    <a href="../auth/logout.php" class="btn-logout">Log out</a>
+                </div>
+            </header>
 
-        <?php include '../includes/article_form.php'; ?>
+            <main class="content-container">
+                <h1 class="page-title">Edit Article</h1>
+
+                <?php if ($message !== ''): ?>
+                    <div class="alert-box alert-error">
+                        <span><?php echo e($message); ?></span>
+                        <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                <?php endif; ?>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Editing: <?php echo e($article['title']); ?></h2>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="detail.php?id=<?php echo e($articleId); ?>" class="btn-mc btn-mc-outline-gray">View Article</a>
+                            <a href="manage.php" class="btn-mc btn-mc-outline-gray">&larr; Back to List</a>
+                        </div>
+                    </div>
+
+                    <?php include '../includes/article_form.php'; ?>
+                </div>
+            </main>
+
+            <footer class="admin-footer">
+                <span>&copy; 2026 MediConnect. All rights reserved.</span>
+            </footer>
+        </div>
     </div>
 </body>
 </html>

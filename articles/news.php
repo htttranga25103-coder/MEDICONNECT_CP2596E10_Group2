@@ -36,24 +36,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
-    <!-- file CSS chung từ assets -->
-    <link rel="stylesheet" href="../assets/css/style.css">
-   <!-- thêm để test truoc ghép vào nhóm có the xóa -->
-   <style> 
-        body { display: block; background-color: #f4f6f9; padding: 20px; }
-        .main-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00b074; padding-bottom: 15px; margin-bottom: 20px; }
-        .article-card { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .article-card:last-child { border-bottom: none; }
-        .article-title { color: #00b074; text-decoration: none; font-size: 18px; font-weight: bold; }
-        .article-title:hover { text-decoration: underline; }
-        .meta-info { font-size: 13px; color: #666; margin-top: 5px; }
-        .btn-auth { background: #00b074; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; }
-        .pagination { margin-top: 20px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-        .pagination a, .pagination .current { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #00b074; font-size: 14px; }
-        .pagination .current { background: #00b074; color: #fff; border-color: #00b074; }
-        .pagination .dots { color: #888; }
-    </style>
+    <link rel="stylesheet" href="../assets/css/article_style.css">
 </head>
 <body>
     <div class="main-container">

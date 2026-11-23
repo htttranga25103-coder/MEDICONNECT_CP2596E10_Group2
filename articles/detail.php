@@ -114,7 +114,6 @@ try {
     <meta charset="UTF-8">
     <title><?php echo e($article['title']); ?> - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/article_style.css">
     <style>
         .msg-success { background: #e6f4ea; color: #137333; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
         .msg-error { background: #fce8e6; color: #c5221f; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
