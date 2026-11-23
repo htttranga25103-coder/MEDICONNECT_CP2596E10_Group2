@@ -1,7 +1,7 @@
 <?php
 ?>
 <form action = "<?php echo e($formAction); ?>" methond = "POST">
-    <?php echo csrfFile(); ?>
+    <?php echo csrfField(); ?>
         <div class="form-group-custom">
             <label>Article title:</label>
             <input type = "text" name = "title" required maxlength = "255" value="<?php echo e($form['title']); ?>">
