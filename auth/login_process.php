@@ -2,7 +2,7 @@
 session_start();
 require_once '../config/MyConnection.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }
 
@@ -10,7 +10,7 @@ $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 if (empty($email) || empty($password)) {
     $_SESSION['error'] = "Please enter both email and password!";
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }
 
@@ -30,12 +30,12 @@ try {
     $user = $stmt->get_result()->fetch_assoc();
     if (!$user || !password_verify($password, $user['password_hash'])) {
         $_SESSION['error'] = "Invalid email or password!";
-        header("Location: ../login.php");
+        header("Location: ../auth/login.php");
         exit();
     }
     if ((int)$user['is_active'] !== 1) {
         $_SESSION['error'] = "Your account has been locked. Please contact the administrator!";
-        header("Location: ../login.php");
+        header("Location: ../auth/login.php");
         exit();
     }
     session_regenerate_id(true);
@@ -52,12 +52,12 @@ try {
         header("Location: ../patient/book_appointment.php");
     } else {
         $_SESSION['error'] = "Your account does not have a valid role assigned!";
-        header("Location: ../login.php");
+        header("Location: ../auth/login.php");
     }
     exit();
 
 } catch (Exception $e) {
     $_SESSION['error'] = "System error: " . $e->getMessage();
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }

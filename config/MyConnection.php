@@ -1,19 +1,33 @@
 <?php
-class MyConnection {
+$host = '127.0.0.1';
+$db = 'mediconnect';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
 
-    public static function connectDatabase() {
-        $servername = "localhost";
-        $username = "root";
-        $password = "";
-        $database = "mediconnect";
-        $conn = new mysqli($servername, $username, $password, $database);
-        $conn->set_charset("utf8mb4");
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }        
-        
-        return $conn;
+// 1. Kết nối PDO (Dùng cho các trang bài viết / module của trưởng nhóm)
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    die("Database connection error: " . $e->getMessage());
+}
+
+if (!class_exists('MyConnection')) {
+    class MyConnection {
+        public static function connectDatabase() {
+            global $host, $user, $pass, $db;
+            $conn = new mysqli($host, $user, $pass, $db);
+            if ($conn->connect_error) {
+                die("Database connection error: " . $conn->connect_error);
+            }
+            $conn->set_charset("utf8mb4");
+            return $conn;
+        }
     }
 }
-?>
-

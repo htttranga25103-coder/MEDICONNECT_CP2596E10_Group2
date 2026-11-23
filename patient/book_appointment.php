@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/MyConnection.php';
 require_once __DIR__ . '/../models/AppointmentManager.php';
 
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'PATIENT') {
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }
 

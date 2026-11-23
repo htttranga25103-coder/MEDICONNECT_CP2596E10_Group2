@@ -4,7 +4,7 @@ require_once '../config/MyConnection.php';
 require_once '../models/PatientManager.php';
 
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'ADMIN') {
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }
 
