@@ -23,6 +23,12 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    overflow-y: auto;
 }
 
 .sidebar-brand {
@@ -36,6 +42,7 @@ body {
     color: #ffffff;
     text-decoration: none;
     letter-spacing: 0.4px;
+    flex-shrink: 0;
 }
 
 .sidebar-menu { list-style: none; padding: 16px 0 16px 12px; flex: 1; }
@@ -60,7 +67,15 @@ body {
     box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.main-area { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-left: 240px;
+    padding-top: 60px;
+    min-height: 100vh;
+    overflow-x: hidden;
+ }
 .topbar {
     height: 60px;
     background-color: #2f5d62;
@@ -69,6 +84,12 @@ body {
     align-items: center;
     justify-content: flex-end;
     padding: 0 28px;
+    position: fixed;
+    top: 0;
+    left: 240px;
+    right: 0;
+    z-index: 999;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 .topbar-user { display: flex; align-items: center; gap: 16px; font-size: 14px; }
 
@@ -246,9 +267,7 @@ body {
 .footer-links a { color: #475569; text-decoration: none; margin-left: 15px; }
 .footer-links a:hover { text-decoration: underline; }
 
-/* =========================================================
-   PHẦN 2: CSS CHO BÀI VIẾT, TÁC GIẢ & PUBLIC NEWS
-   ========================================================= */
+/*Cố định thanh Navbar cho trang Public (index.php, news.php, detail.php) */
 .public-navbar {
     background-color: #2f5d62;
     color: #ffffff;
@@ -258,6 +277,9 @@ body {
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 .public-brand { font-size: 22px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: 0.4px; }
 .public-nav-links { display: flex; align-items: center; gap: 16px; font-size: 14px; }
@@ -394,12 +416,19 @@ body {
     .form-group.col-span-4 { grid-column: span 2; }
 }
 @media (max-width: 768px) {
-    .admin-wrapper { flex-direction: column; }
-    .sidebar { width: 100%; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.col-span-2, .form-group.col-span-4 { grid-column: span 1; }
-    .article-card { flex-direction: column; }
-    .article-thumb-wrap { width: 100%; height: 190px; }
+    .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+    }
+    .main-area {
+        margin-left: 0;
+        padding-top: 0;
+    }
+    .topbar {
+        position: static;
+        left: 0;
+    }
 }
 .author-avatar {
     width: 54px;
