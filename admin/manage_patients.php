@@ -72,11 +72,9 @@ $endItem   = min($offset + $limit, $totalPatients);
     <aside class="sidebar">
         <a href="dashboard.php" class="sidebar-brand">MediConnect</a>
         <ul class="sidebar-menu">
-            <li><a href="dashboard.php">Overview</a></li>
+            <li><a href="../index.php">Home</a></li>
             <li><a href="manage_patients.php" class="active">Patients</a></li>
             <li><a href="manage_doctors.php"> Doctors</a></li>
-            <li><a href="review_applications.php">Review Applications</a></li>
-            <li><a href="../articles/manage.php">News Management</a></li>
         </ul>
     </aside>
 

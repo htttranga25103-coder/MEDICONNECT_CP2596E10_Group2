@@ -2,7 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/MyConnection.php';
 if (!isset($_SESSION['user_id']) || strtoupper($_SESSION['role_name'] ?? '') !== 'DOCTOR') {
-    header("Location: ../login.php");
+    header("Location: ../auth/login.php");
     exit();
 }
 

@@ -96,13 +96,14 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
 <body>
 <nav class="patient-navbar">
     <div class="navbar-container">
-        <a href="book_appointment.php" class="brand-logo">MediConnect</a>
+        <a href="../index.php" class="brand-logo">MediConnect</a>
 
         <ul class="nav-links">
+            <li><a href="../index.php">Home / News</a></li>
             <li><a href="book_appointment.php" class="active">Book Appointment</a></li>
             <li><a href="my_appointments.php">My Appointments</a></li>
             <li><a href="../chat.php">Consultation Chat</a></li>
-            <li><a href="profile.php">My Profile</a></li>
+            <li><a href="../auth/profile.php">My Profile</a></li>
         </ul>
 
         <div class="nav-user">

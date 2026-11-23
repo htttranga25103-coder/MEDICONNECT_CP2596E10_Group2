@@ -58,17 +58,19 @@ function resolveUserAvatar(?string $avatarUrl): string {
 <body>
 <nav class="patient-navbar">
     <div class="navbar-container">
-        <a href="<?= $homeLink ?>" class="brand-logo">MediConnect</a>
+        <a href="index.php" class="brand-logo">MediConnect</a>
 
         <ul class="nav-links">
+            <li><a href="index.php">Home / News</a></li>
             <?php if ($role_name === 'PATIENT'): ?>
                 <li><a href="patient/book_appointment.php">Book Appointment</a></li>
                 <li><a href="patient/my_appointments.php">My Appointments</a></li>
                 <li><a href="chat.php" class="active">Consultation Chat</a></li>
-                <li><a href="patient/profile.php">My Profile</a></li>
+                <li><a href="auth/profile.php">My Profile</a></li>
             <?php else: ?>
                 <li><a href="doctor/dashboard.php">Doctor Dashboard</a></li>
                 <li><a href="chat.php" class="active">Patient Chat</a></li>
+                <li><a href="articles/manage.php">Manage Articles</a></li>
             <?php endif; ?>
         </ul>
 
@@ -80,7 +82,6 @@ function resolveUserAvatar(?string $avatarUrl): string {
         </div>
     </div>
 </nav>
-
 <main class="main-container" style="margin-top: 26px;">
     <div class="chat-wrapper">
         <aside class="chat-sidebar">

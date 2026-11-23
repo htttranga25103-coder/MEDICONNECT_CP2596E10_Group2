@@ -1,89 +1,134 @@
 <?php
-// Hiển thị lỗi để dễ dàng kiểm tra trong quá trình phát triển
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
 session_start();
 require_once 'config/database.php';
+require_once 'includes/functions.php';
 
 try {
-    // Truy vấn lấy danh sách 5 bài viết mới nhất kèm theo tên danh mục và tên tác giả
+    // Lấy 5 bài viết mới nhất kèm danh mục và tác giả
     $stmt = $pdo->query("
-        SELECT a.*, ac.name as category_name, u.full_name as author_name
+        SELECT a.*, ac.name AS category_name, u.full_name AS author_name
         FROM articles a
         LEFT JOIN article_categories ac ON a.category_id = ac.category_id
         JOIN users u ON a.author_id = u.user_id
-        ORDER BY a.created_at DESC
+        ORDER BY a.created_at DESC, a.article_id DESC
         LIMIT 5
     ");
     $articles = $stmt->fetchAll();
 } catch (\PDOException $e) {
-    die("SQL query error: " . $e->getMessage());
+    error_log("Home load articles error: " . $e->getMessage());
+    die("Unable to load featured articles. Please try again later.");
 }
+
+$role = $_SESSION['role_name'] ?? '';
+$isStaff = isset($_SESSION['user_id']) && in_array($role, ['ADMIN', 'DOCTOR'], true);
 ?>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - MediConnect</title>
-    <!-- Gọi file CSS chung từ thư mục assets -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style> 
-        body { display: block; background-color: #f4f6f9; padding: 20px; font-family: Arial, sans-serif; }
-        .main-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00b074; padding-bottom: 15px; margin-bottom: 20px; }
-        .article-card { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .article-card:last-child { border-bottom: none; }
-        .article-title { color: #00b074; text-decoration: none; font-size: 18px; font-weight: bold; }
-        .article-title:hover { text-decoration: underline; }
-        .meta-info { font-size: 13px; color: #666; margin-top: 5px; }
-        .btn-auth { background: #00b074; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; margin-left: 10px; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="assets/css/patient_booking.css?v=2">
+    <link rel="stylesheet" href="assets/css/article_style.css?v=2">
+    <link rel="stylesheet" href="assets/css/home_style.css?v=1">
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-nav">
-            <h1 style="color: #00b074; margin: 0;">MediConnect</h1>
-            <div>
-                <!-- sang trang danh sách đầy đủ articles/news.php -->
-                <a href="articles/news.php" style="margin-right: 15px; text-decoration: none; color: #00b074; font-weight: bold;">View all articles</a>
+    <!-- Thanh điều hướng đồng bộ -->
+    <nav class="patient-navbar">
+        <div class="navbar-container">
+            <a href="index.php" class="brand-logo">MediConnect</a>
+
+            <ul class="nav-links">
+                <li><a href="index.php" class="active">Home</a></li>
+                <li><a href="articles/news.php">All Articles</a></li>
 
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <span>Welcome back, <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? ''); ?></strong>!</span>
-                    
-                    <?php if (in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'])): ?>
-                        <a href="articles/manage.php" class="btn-auth" style="background: #ffc107; color: #333;">Quản lý</a>
+                    <?php if ($role === 'ADMIN'): ?>
+                        <li><a href="admin/manage_patients.php">Manage Users</a></li>
+                    <?php elseif ($role === 'DOCTOR'): ?>
+                        <li><a href="doctor/dashboard.php">Doctor Portal</a></li>
+                    <?php elseif ($role === 'PATIENT'): ?>
+                        <li><a href="patient/book_appointment.php">Book Appointment</a></li>
+                        <li><a href="chat.php">Consultation Chat</a></li>
                     <?php endif; ?>
+                <?php endif; ?>
+            </ul>
 
-                    <a href="auth/logout.php" class="btn-auth" style="background: #00b074;">Log out</a>
+            <div class="nav-user">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong></span>
+                    <a href="auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">
+                        Logout
+                    </a>
                 <?php else: ?>
-                    <a href="auth/login.php" class="btn-auth">Log in</a>
+                    <a href="auth/login.php" class="btn-logout-patient btn-login-nav">
+                        Log in
+                    </a>
                 <?php endif; ?>
             </div>
         </div>
+    </nav>
 
-        <!-- PHẦN HIỂN THỊ BÀI VIẾT NỔI BẬT TRÊN TRANG CHỦ -->
-        <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
-        
+    <!-- Danh sách bài viết nổi bật -->
+    <main class="main-wrapper">
+        <div class="section-bar">
+            <h2>Featured Medical Articles</h2>
+            <a href="articles/news.php" class="btn-view-all">View All Articles &rarr;</a>
+        </div>
+
         <?php if (!empty($articles)): ?>
-            <?php foreach ($articles as $art): ?>
-                <div class="article-card">
-                    <a href="articles/detail.php?id=<?php echo $art['article_id']; ?>" class="article-title">
-                        <?php echo htmlspecialchars($art['title']); ?>
-                    </a>
-                    <div class="meta-info">
-                        Category: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'General'); ?></strong> | 
-                        Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
-                        Date Published: <?php echo $art['created_at']; ?>
-                    </div>
-                    <p style="color: #444; margin-top: 8px;"><?php echo htmlspecialchars($art['summary'] ?? ''); ?></p>
-                </div>
-            <?php endforeach; ?>
+            <div class="article-list">
+                <?php foreach ($articles as $art): ?>
+                    <?php
+                        $thumb = ltrim((string)($art['thumbnail_url'] ?? ''), '/');
+                    ?>
+                    <article class="article-card">
+                        <?php if ($thumb !== ''): ?>
+                            <a href="articles/detail.php?id=<?= (int)$art['article_id'] ?>" class="article-thumb-wrap">
+                                <img src="<?= e($thumb) ?>" alt="<?= e($art['title']) ?>" class="article-thumb">
+                            </a>
+                        <?php endif; ?>
+
+                        <div class="article-body">
+                            <span class="article-category-tag">
+                                <?= e($art['category_name'] ?? 'General') ?>
+                            </span>
+
+                            <a href="articles/detail.php?id=<?= (int)$art['article_id'] ?>" class="article-title">
+                                <?= e($art['title']) ?>
+                            </a>
+
+                            <div class="article-meta">
+                                <span>Author: <strong><?= e($art['author_name']) ?></strong></span>
+                                <span>&bull;</span>
+                                <span>Published: <?= e($art['created_at']) ?></span>
+                            </div>
+
+                            <p class="article-summary">
+                                <?= e($art['summary'] ?? '') ?>
+                            </p>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         <?php else: ?>
-            <p style="color: #666; font-style: italic;">No articles found in the database</p>
+            <div class="article-card article-card-empty">
+                No articles found in the database.
+            </div>
         <?php endif; ?>
-    </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>&copy; 2026 MediConnect. All rights reserved.</span>
+            <div>
+                <a href="articles/news.php">Medical News</a>
+                <?php if ($isStaff): ?>
+                    <a href="articles/manage.php">Author Portal</a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

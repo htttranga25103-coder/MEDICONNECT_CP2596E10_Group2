@@ -18,7 +18,7 @@ try {
     die("Database connection error: " . $e->getMessage());
 }
 
-
+// 2. Class MyConnection (Dùng cho các trang quản trị / đặt lịch / chat của bạn)
 if (!class_exists('MyConnection')) {
     class MyConnection {
         public static function connectDatabase() {

@@ -1,9 +1,14 @@
+<?php
+session_start();
+require_once '../includes/csrf.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Create an account</title>
-    <link rel = "stylesheet" href = "../assets/css/auth_style.css">
+    <link rel = "stylesheet" href = "../assets/css/auth_style.css?v=2">
 </head>
 <body>
     <div class="login-card" style="width: 480px; margin: 40px auto; padding: 30px;">
@@ -15,17 +20,18 @@
             </div>
         </div>
 
-        <p style="color: #00b074; font-size: 13px; font-weight: bold; margin-bottom: 5px;">A HEALTHY START</p>
+        <p style="color: #168077; font-size: 13px; font-weight: bold; margin-bottom: 5px;">A HEALTHY START</p>
         <h2 style="font-size: 24px; margin-bottom: 8px;">Live healthier, with MediConnect.</h2>
         <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Create an account to book visits and manage your health, all in one place.</p>
 
         <!-- Hiển thị thông báo lỗi nếu có -->
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
+            <div class="error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
         <?php endif; ?>
 
         
         <form action="register_process.php" method="POST">
+            <?php echo csrfField(); ?>
             <div class="form-group">
                 <label>Full name</label>
                 <input type="text" name="full_name" required placeholder="Enter your full name">
@@ -65,7 +71,7 @@
             <button type="submit" name="register_btn" style="margin-top: 15px;">Create account</button>
         </form>
     <p style = "text-align: center; margin-top: 20px; font-size:14px">
-        Already have an account? <a href="login.php" style="color: #00b074; font-weight: bold; text-decoration: none;">Log in </a>
+        Already have an account? <a href="login.php" style="color: #168077; font-weight: bold; text-decoration: none;">Log in </a>
     </p>
     </div>
 </body>
