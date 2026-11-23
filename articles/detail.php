@@ -6,31 +6,30 @@ require_once '../includes/csrf.php';
 
 $articleId = (int)($_GET['id'] ?? 0);
 $maxCommentLength = 1000;
-$detailUrl = 'detail.php?id'.$articleId;
-
-//hien 1 lan thong bao da xoaa
-$flash = $_SESSION['comment_flash']??null;
+$detailUrl = 'detail.php?id=' . $articleId; 
+// Hiển thị 1 lần thông báo flash
+$flash = $_SESSION['comment_flash'] ?? null;
 unset($_SESSION['comment_flash']);
 
-//reset tra lai trang thai moi (f5)
-function redirectWithCommentFlash(string $type, string $text, string $url): void{
-    $_SESSION['comment_flash']=['type' => $type, 'text' => $text];
-    header("Location:". $url);
+function redirectWithCommentFlash(string $type, string $text, string $url): void {
+    $_SESSION['comment_flash'] = ['type' => $type, 'text' => $text];
+    header("Location: " . $url);
     exit();
 }
 
-//check xem baif viet co ton tai truoc khi hien thi
-try{
+// Kiểm tra bài viết có tồn tại trước khi hiển thị
+try {
     $stmtArt = $pdo->prepare("SELECT a.*, u.full_name as author_name
-    FROM articles a JOIN users u ON a.author_id = u.user_id WHERE a.article_id =?");
+    FROM articles a JOIN users u ON a.author_id = u.user_id WHERE a.article_id = ?");
     $stmtArt->execute([$articleId]);
     $article = $stmtArt->fetch();
-}catch(\PDOException $e){
-    error_log("article load error:". $e->getMessage());
+} catch (\PDOException $e) {
+    error_log("article load error: " . $e->getMessage());
     http_response_code(500);
     die("Unable to load the article. Please try again later.");
 }
-if(!$article){
+
+if (!$article) {
     http_response_code(404);
     die("The article does not exist!");
 }
@@ -38,17 +37,17 @@ if(!$article){
 $commentError = '';
 $commentDraft = '';
 
-//  gửi bình luận
+// Gửi bình luận
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
     if (!isset($_SESSION['user_id'])) {
         header("Location: ../auth/login.php");
         exit();
     }
 
-    $commentText = trim($_POST['comment_text']);
+    $commentDraft = trim($_POST['comment_text'] ?? ''); 
     $userId = $_SESSION['user_id'];
 
- if (!csrfValid()) {
+    if (!csrfValid()) {
         $commentError = CSRF_ERROR_MESSAGE;
     } elseif ($commentDraft === '') {
         $commentError = "Please write something before sending.";
@@ -66,45 +65,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
     }
 }
 
-//xoa bai viet (cho phep nguoi viet xoa/ admin)
-if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['delete_comment'])){
-    if(!isset($_SESSION['user_id'])){
+// Xóa bình luận
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comment'])) {
+    if (!isset($_SESSION['user_id'])) {
         header("Location: ../auth/login.php");
         exit();
     }
-if(!csrfValid()){
-    redirectWithCommentFlash('error', CSRF_ERROR_MESSAGE, $detailUrl);
-}
-$commentId = (int)($_POST['comment_id']?? 0);
-try{
-    $stmtFind = $pdo->prepare("SELECT comment_id, user_id FROM article_comments
-    WHERE comment_id = ? AND article_id = ?");
-    $stmtFind->execute([$commentId, $articleID]);
-    $target = $stmtFind->fetch();
-if(!$target){
-    redirectWithCommentFlash('error', "The comment does not exist.",
-    $detailUrl);
+    if (!csrfValid()) {
+        redirectWithCommentFlash('error', CSRF_ERROR_MESSAGE, $detailUrl);
     }
-//check quyen truoc
-if(!canDeleteComment($target)){
-    redirectWithCommentFlash('error', "You do not have permission to delete this comment.", $detailUrl);
+
+    $commentId = (int)($_POST['comment_id'] ?? 0);
+    try {
+        $stmtFind = $pdo->prepare("SELECT comment_id, user_id FROM article_comments WHERE comment_id = ? AND article_id = ?");
+        $stmtFind->execute([$commentId, $articleId]); 
+        $target = $stmtFind->fetch();
+
+        if (!$target) {
+            redirectWithCommentFlash('error', "The comment does not exist.", $detailUrl);
+        }
+
+        if (!canDeleteComment($target)) {
+            redirectWithCommentFlash('error', "You do not have permission to delete this comment.", $detailUrl);
+        }
+
+        $stmtDel = $pdo->prepare("DELETE FROM article_comments WHERE comment_id = ?"); // Sửa lỗi 4: FORM -> FROM
+        $stmtDel->execute([$commentId]);
+        redirectWithCommentFlash('success', "Comment deleted.", $detailUrl);
+    } catch (\PDOException $e) {
+        error_log("Delete comment error: " . $e->getMessage());
+        $commentError = "Could not delete the comment. Please try again later.";
+    }
 }
 
-$stmtDel = $pdo->prepare("DELETE FORM article_comments WHERE comment_id = ?");
-$stmtDel ->execute([$commentId]);
-redirectWithCommentFlash('success',"Comment deleted.", $detailUrl);
-}catch(\PDOException $e){
-    error_log("Delete comment error: ". $e->getMessage());
-    $commentError = "Could not delete the comment. Please try again later.";
-}
-}
-
-// danh sách bình luận
-try{
-$stmtCom = $pdo->prepare("SELECT ac.*, u.full_name FROM article_comments ac JOIN users u ON ac.user_id = u.user_id WHERE ac.article_id = ? ORDER BY ac.created_at DESC");
-$stmtCom->execute([$articleId]);
-$comments = $stmtCom->fetchAll();
-}catch(\PDOException $e){
+// Danh sách bình luận
+try {
+    $stmtCom = $pdo->prepare("SELECT ac.*, u.full_name FROM article_comments ac JOIN users u ON ac.user_id = u.user_id WHERE ac.article_id = ? ORDER BY ac.created_at DESC");
+    $stmtCom->execute([$articleId]);
+    $comments = $stmtCom->fetchAll();
+} catch (\PDOException $e) {
     error_log("Comments load error: " . $e->getMessage());
     $comments = [];
 }
@@ -113,10 +112,10 @@ $comments = $stmtCom->fetchAll();
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title><?php echo e($article['title']); ?> MediConnect</title>
+    <title><?php echo e($article['title']); ?> - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/article_style.css">
-     <style>
+    <style>
         .msg-success { background: #e6f4ea; color: #137333; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
         .msg-error { background: #fce8e6; color: #c5221f; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
         .btn-del-comment { background: none; border: none; color: #d93025; cursor: pointer; font-size: 12px; padding: 0; }
@@ -124,15 +123,30 @@ $comments = $stmtCom->fetchAll();
 </head>
 <body>
     <div class="main-container" style="max-width: 900px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px;">
-        <a href="news.php">←Return to the news list </a>
+        <a href="news.php">← Return to the news list</a>
         <h1><?php echo e($article['title']); ?></h1>
         <p style="color: #666; font-size: 13px;">Author: <strong><?php echo htmlspecialchars($article['author_name']); ?></strong> | Date submit: <?php echo $article['created_at']; ?></p>
+        
+        <?php
+            $thumb = $article['thumbnail_url'] ?? ''; 
+            if (!empty($thumb) && !preg_match('/^https?:\/\//i', $thumb)) {
+                $thumb = '../' . ltrim($thumb, '/');
+            }
+        ?>
+        <?php if (!empty($thumb)): ?>
+            <div style="margin: 20px 0;">
+                <img src="<?php echo htmlspecialchars($thumb); ?>" 
+                     alt="<?php echo htmlspecialchars($article['title']); ?>" 
+                     style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
+            </div>
+        <?php endif; ?>
+
         <hr style="margin: 20px 0;">
         
         <div class="content">
-             <?php echo nl2br(e($article['summary'])); ?>
+            <strong><?php echo nl2br(e($article['summary'])); ?></strong>
             <div style="margin-top: 20px; line-height: 1.6;">
-            <?php echo nl2br(e($article['content'])); ?>
+                <?php echo nl2br(e($article['content'])); ?>
             </div>
         </div>
 
@@ -150,7 +164,7 @@ $comments = $stmtCom->fetchAll();
             <form action="detail.php?id=<?php echo $articleId; ?>" method="POST" style="margin-bottom: 20px;">
                 <?php echo csrfField(); ?>
                 <textarea name="comment_text" rows="3" required maxlength="<?php echo $maxCommentLength; ?>" placeholder="Please share your opinion..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;"><?php echo e($commentDraft); ?></textarea>
-                <button type="submit" name="submit_comment" style="margin-top: 8px; background: #00b074; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Sent comment</button>
+                <button type="submit" name="submit_comment" style="margin-top: 8px; background: #00b074; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Send comment</button>
                 <span style="font-size: 12px; color: #888; margin-left: 8px;">Up to <?php echo $maxCommentLength; ?> characters.</span>
             </form>
         <?php else: ?>

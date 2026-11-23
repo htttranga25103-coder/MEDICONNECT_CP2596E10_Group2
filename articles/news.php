@@ -75,23 +75,38 @@ try {
         <!-- Nằm ngoài header-nav để thêm test bố cục -->
        <h2 style="color: #333; margin-top: 0;">Featured Medical Article</h2>
         
-        <?php if (!empty($articles)): ?>
-            <?php foreach ($articles as $art): ?>
-                <div class="article-card">
-                    <a href="detail.php?id=<?php echo $art['article_id']; ?>" class="article-title">
-                        <?php echo htmlspecialchars($art['title']); ?>
+    <?php if (!empty($articles)): ?>
+        <?php foreach ($articles as $art): ?>
+            <?php
+                // Xử lý đường dẫn ảnh: nếu là link http thì giữ nguyên, nếu là file local thì thêm ../ vì file đang nằm trong thư mục articles/
+                $thumb = $art['thumbnail_url'] ?? '';
+                if (!empty($thumb) && !preg_match('/^https?:\/\//i', $thumb)) {
+                    $thumb = '../' . ltrim($thumb, '/');
+                }
+            ?>
+            <div class="article-card">
+                <?php if (!empty($thumb)): ?>
+                    <a href="detail.php?id=<?php echo $art['article_id']; ?>">
+                        <img src="<?php echo htmlspecialchars($thumb); ?>" alt="<?php echo htmlspecialchars($art['title']); ?>" class="article-thumb">
                     </a>
-                    <div class="meta-info">
-                        Category: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'General'); ?></strong> | 
-                        Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
-                        Date Published: <?php echo $art['created_at']; ?>
-                    </div>
-                    <p style="color: #444; margin-top: 8px;"><?php echo htmlspecialchars($art['summary'] ?? ''); ?></p>
+                <?php endif; ?>
+
+            <div class="article-info">
+                <a href="detail.php?id=<?php echo $art['article_id']; ?>" class="article-title">
+                    <?php echo htmlspecialchars($art['title']); ?>
+                </a>
+                <div class="meta-info">
+                    Category: <strong><?php echo htmlspecialchars($art['category_name'] ?? 'General'); ?></strong> | 
+                    Author: <?php echo htmlspecialchars($art['author_name']); ?> | 
+                    Date Published: <?php echo $art['created_at']; ?>
                 </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p style="color: #666; font-style: italic;">No articles found in the database</p>
-        <?php endif; ?>
+                <p style="color: #444; margin-top: 8px;"><?php echo htmlspecialchars($art['summary'] ?? ''); ?></p>
+            </div>
+        </div>
+    <?php endforeach; ?>
+    <?php else: ?>
+        <p style="color: #666; font-style: italic;">No articles found in the database</p>
+    <?php endif; ?>
 
         <?php echo renderPagination($page, $totalPages, 'news.php'); ?>
     </div>

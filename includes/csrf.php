@@ -1,6 +1,5 @@
 <?php
-const CSRF_ERROR_MESSAGE = "Your session has expired or the request is invalid.
-Please try again!";
+const CSRF_ERROR_MESSAGE = "Your session has expired or the request is invalid. Please try again!";
 
 function csrfToken(): string{
     if (empty($_SESSION['csrf_token'])) {
@@ -10,7 +9,7 @@ function csrfToken(): string{
 }
 
 function csrfField():string {
-    return '<input type = "hidden" name = "csrf_token" value="' . htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') . ' ">';
+    return '<input type = "hidden" name = "csrf_token" value="' . htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') . '">';
 }
 
 function csrfValid(): bool{
