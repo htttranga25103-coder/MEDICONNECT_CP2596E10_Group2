@@ -8,7 +8,7 @@ require_once '../includes/csrf.php';
 <head>
     <meta charset="UTF-8">
     <title>Login MediConnect</title>
-    <link rel = "stylesheet" href = "../assets/css/auth_style.css">
+    <link rel = "stylesheet" href = "../assets/css/auth_style.css?v=">
 </head>
 <body>
     <div class="login-card">
@@ -61,7 +61,7 @@ require_once '../includes/csrf.php';
             <button type="submit">Login</button>
         </form>
         <p style=class="auth-footer-link">
-            Don't have an account? <a href="register.php" style="color: #168077; font-weight:bold; text-decoration: none;">Create an account</a>
+            Don't have an account? <a href="register.php">Create an account</a>
         </p>
 
     </div>

@@ -8,7 +8,7 @@ require_once '../includes/csrf.php';
 <head>
     <meta charset="UTF-8">
     <title>Create an account</title>
-    <link rel = "stylesheet" href = "../assets/css/auth_style.css">
+    <link rel = "stylesheet" href = "../assets/css/auth_style.css?v=2">
 </head>
 <body>
     <div class="login-card" style="width: 480px; margin: 40px auto; padding: 30px;">
