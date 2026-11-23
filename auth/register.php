@@ -26,7 +26,7 @@ require_once '../includes/csrf.php';
 
         <!-- Hiển thị thông báo lỗi nếu có -->
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
+            <div class="error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
         <?php endif; ?>
 
         

@@ -8,7 +8,7 @@ function e($value): string{
 }
 function isValidAvatar(string $avatar): bool{
     return strlen($avatar) <= 255 &&(
-        preg_match('#^htpp://[^\s]+$#i', $avatar) === 1 ||
+        preg_match('#^https://[^\s]+$#i', $avatar) === 1 ||
         preg_match('/^[\w\-]+\.(png|jpe?g|gif|webp)$/i', $avatar)===1
 );
 }
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $messageType = 'error';
 }
 
-// ===== 2. ĐỔI MẬT KHẨU =====
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $oldPass     = $_POST['old_password'] ?? '';
     $newPass     = $_POST['new_password'] ?? '';

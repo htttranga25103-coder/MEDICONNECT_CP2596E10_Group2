@@ -46,6 +46,7 @@ if(!$user || !password_verify($password, $user['password_hash'])|| $user['role_n
 
 //doi phien dang nhap de chong tan cong fixation
 session_regenerate_id(true); 
+unset($_SESSION['csrf_token']);   // doi ma CSRF cho phien dang nhap moi
 $_SESSION['user_id'] = $user['user_id'];
 $_SESSION['full_name'] = $user['full_name'];
 $_SESSION['role_name'] = $user['role_name'];
@@ -61,7 +62,7 @@ $_SESSION['role_name'] = $user['role_name'];
     // }else{
     //     $_SESSION['errer'] = "Incorrect email or password!";
     //     
-        header("Location: index.php");
+        header("Location: ../index.php");
         exit();
    // }
 //}

@@ -26,10 +26,10 @@ $phoneNumber = trim($_POST['phone_number']?? '');
 $province = trim($_POST['province']?? '');
 $ward = trim($_POST['ward']?? '');
 $street = trim($_POST['street']?? '');
-$password = trim($_POST['password']?? '');
+$password = $_POST['password'] ?? '';   // khong trim: mat khau co the chua dau cach
 
 //gom address theo database
-$fullAddress = implode(',', array_filter([$street, $ward, $province], 'strlen'));
+$fullAddress = implode(', ', array_filter([$street, $ward, $province], 'strlen'));
 
 //check dinh dang cua form dang ky
 if($fullName === ''|| mb_strlen($fullName)>100){
@@ -55,11 +55,11 @@ if(!preg_match('/[A-Za-z]/', $password)|| !preg_match('/[0-9]/', $password)){
     failRegister("Password must contain both letters and numbers.");
 }
 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-$roles = 3; //dang test patient dang ky tai khoan
+$roleId = 3; //dang test patient dang ky tai khoan
 
 try{
     $pdo->beginTransaction();
-    $stmtUser = $pdo->prepare("INSERT INTO users (role_id, email, password_hash, full_name, phone_name, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+    $stmtUser = $pdo->prepare("INSERT INTO users (role_id, email, password_hash, full_name, phone_number, is_active) VALUES (?, ?, ?, ?, ?, 1)");
     $stmtUser->execute([$roleId , $email, $passwordHash, $fullName, $phoneClean]);
     $userId = $pdo->lastInsertId();
 
