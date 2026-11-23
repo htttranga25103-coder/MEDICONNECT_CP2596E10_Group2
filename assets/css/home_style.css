@@ -6,8 +6,6 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
-
-/* Hero Banner */
 .home-hero {
     background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: #ffffff;
@@ -80,8 +78,6 @@ body {
     color: #0f766e;
     border: none;
 }
-
-/* Main Content Wrapper */
 .main-wrapper {
     max-width: 1140px;
     width: 100%;
@@ -124,8 +120,6 @@ body {
     border-color: #0f766e;
     color: #0f766e;
 }
-
-/* Article Cards */
 .article-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -154,8 +148,6 @@ body {
 .article-title:hover {
     color: #0f766e;
 }
-
-/* Footer */
 .site-footer {
     background: #ffffff;
     border-top: 1px solid #e2e8f0;

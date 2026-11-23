@@ -5,7 +5,6 @@ $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';
 
-// 1. Kết nối PDO (Dùng cho các trang bài viết / module của trưởng nhóm)
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -18,7 +17,6 @@ try {
     die("Database connection error: " . $e->getMessage());
 }
 
-// 2. Class MyConnection (Dùng cho các trang quản trị / đặt lịch / chat của bạn)
 if (!class_exists('MyConnection')) {
     class MyConnection {
         public static function connectDatabase() {

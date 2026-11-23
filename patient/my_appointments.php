@@ -15,8 +15,6 @@ $patient_id = $apptManager->getPatientIdByUserId($_SESSION['user_id']);
 if (!$patient_id) {
     die("Patient profile not found. Please contact administrator.");
 }
-
-// Xử lý hủy lịch hẹn
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel') {
     $result = $apptManager->cancelAppointment((int)$_POST['appointment_id'], $patient_id);
     $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
