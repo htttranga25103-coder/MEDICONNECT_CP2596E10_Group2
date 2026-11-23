@@ -16,7 +16,7 @@ if (!$patient_id) {
     die("Patient profile not found. Please contact administrator.");
 }
 function resolveDoctorAvatar(?string $avatarUrl): string {
-    $defaultAvatar = '../assets/uploads/avatars/default_avatar.png';
+    $defaultAvatar = '../assets/uploads/avatars/.png';
 
     if (empty($avatarUrl)) {
         return $defaultAvatar;

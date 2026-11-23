@@ -22,7 +22,7 @@ if ($partner_id === 0 && count($contacts) > 0) {
 $partner  = $partner_id > 0 ? $chatManager->getPartnerInfo($partner_id) : null;
 $homeLink = ($role_name === 'PATIENT') ? 'patient/book_appointment.php' : 'doctor/dashboard.php';
 function resolveUserAvatar(?string $avatarUrl): string {
-    $defaultAvatar = 'assets/uploads/avatars/default_avatar.png';
+    $defaultAvatar = 'assets/uploads/avatars/.png';
 
     if (empty($avatarUrl)) {
         return $defaultAvatar;

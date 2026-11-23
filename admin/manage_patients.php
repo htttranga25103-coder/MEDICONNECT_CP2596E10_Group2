@@ -214,9 +214,6 @@ $endItem   = min($offset + $limit, $totalPatients);
                         <button type="submit" class="btn-mc btn-mc-teal" id="btn_submit">
                             Add Patient
                         </button>
-                        <button type="button" class="btn-mc btn-mc-danger d-none" id="btn_delete_in_form" onclick="submitDeleteFromForm()">
-                            Delete This Patient
-                        </button>
                         <button type="button" class="btn-mc btn-mc-outline-gray d-none" id="btn_cancel" onclick="resetForm()">
                             Cancel / Reset Form
                         </button>
