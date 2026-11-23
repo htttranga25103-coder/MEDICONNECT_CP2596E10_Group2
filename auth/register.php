@@ -20,7 +20,7 @@ require_once '../includes/csrf.php';
             </div>
         </div>
 
-        <p style="color: #00b074; font-size: 13px; font-weight: bold; margin-bottom: 5px;">A HEALTHY START</p>
+        <p style="color: #168077; font-size: 13px; font-weight: bold; margin-bottom: 5px;">A HEALTHY START</p>
         <h2 style="font-size: 24px; margin-bottom: 8px;">Live healthier, with MediConnect.</h2>
         <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Create an account to book visits and manage your health, all in one place.</p>
 
@@ -71,7 +71,7 @@ require_once '../includes/csrf.php';
             <button type="submit" name="register_btn" style="margin-top: 15px;">Create account</button>
         </form>
     <p style = "text-align: center; margin-top: 20px; font-size:14px">
-        Already have an account? <a href="login.php" style="color: #00b074; font-weight: bold; text-decoration: none;">Log in </a>
+        Already have an account? <a href="login.php" style="color: #168077; font-weight: bold; text-decoration: none;">Log in </a>
     </p>
     </div>
 </body>

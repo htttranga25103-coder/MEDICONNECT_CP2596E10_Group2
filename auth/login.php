@@ -13,7 +13,7 @@ require_once '../includes/csrf.php';
 <body>
     <div class="login-card">
         <div class="brand-header">
-            <div class="brand-logo"></div>
+            <div class="brand-logo">+</div>
             <div>
                 <p class="brand-title">MediConnect</p>
                 <p class="brand-subtitle">Comprehensive healthcare</p>
@@ -60,8 +60,8 @@ require_once '../includes/csrf.php';
 
             <button type="submit">Login</button>
         </form>
-        <p style="text-align: center; margin-top:20px; font-size:14px;">
-            Don't have an account? <a href="register.php" style="color: #00b074; font-weight:bold; text-decoration: none;">Create an account</a>
+        <p style=class="auth-footer-link">
+            Don't have an account? <a href="register.php" style="color: #168077; font-weight:bold; text-decoration: none;">Create an account</a>
         </p>
 
     </div>
