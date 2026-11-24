@@ -36,27 +36,53 @@ $isStaff = isset($_SESSION['user_id']) && in_array($_SESSION['role_name'] ?? '',
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Articles - MediConnect</title>
-    <link rel="stylesheet" href="../assets/css/article_style.css">
+    <link rel="stylesheet" href="../assets/css/patient_booking.css?v=3">
+    <link rel="stylesheet" href="../assets/css/article_style.css?v=2">
 </head>
 <body>
-    <header class="public-navbar">
-        <a href="../index.php" class="public-brand">MediConnect</a>
-        <nav class="public-nav-links">
-            <a href="../index.php" class="nav-item">Home</a>
-            <a href="news.php" class="nav-item active">All Articles</a>
+    <?php $role = $_SESSION['role_name'] ?? ''; ?>
+    <nav class="patient-navbar">
+        <div class="navbar-container">
+            <a href="../index.php" class="brand-logo">MediConnect</a>
 
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <a href="../auth/profile.php" class="nav-item">Profile</a>
-                <?php if ($isStaff): ?>
-                    <a href="manage.php" class="nav-item">Manage Articles</a>
+            <ul class="nav-links">
+                <li><a href="../index.php">Home</a></li>
+                <li><a href="news.php" class="active">All Articles</a></li>
+
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <?php if ($role === 'ADMIN'): ?>
+                        <li><a href="../admin/manage_patients.php">Manage Users</a></li>
+                    <?php elseif ($role === 'DOCTOR'): ?>
+                        <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
+                        <li><a href="../chat.php">Patient Chat</a></li>
+                    <?php elseif ($role === 'PATIENT'): ?>
+                        <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
+                        <li><a href="../patient/my_appointments.php">My Appointments</a></li>
+                        <li><a href="../chat.php">Consultation Chat</a></li>
+                    <?php endif; ?>
+
+                    <?php if (!empty($isStaff)): ?>
+                        <li><a href="manage.php">Manage Articles</a></li>
+                    <?php endif; ?>
+
+                    <li><a href="../auth/profile.php">My Profile</a></li>
                 <?php endif; ?>
-                <span>Hi, <strong><?php echo e($_SESSION['full_name'] ?? ''); ?></strong></span>
-                <a href="../auth/logout.php" class="btn-logout">Log out</a>
-            <?php else: ?>
-                <a href="../auth/login.php" class="btn-mc btn-mc-teal">Log in</a>
-            <?php endif; ?>
-        </nav>
-    </header>
+            </ul>
+
+            <div class="nav-user">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong></span>
+                    <a href="../auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">
+                        Logout
+                    </a>
+                <?php else: ?>
+                    <a href="../auth/login.php" class="btn-logout-patient" style="background:#ffffff; color:#0f766e; border:none;">
+                        Log in
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
 
     <main class="article-container">
         <div class="panel-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 18px;">

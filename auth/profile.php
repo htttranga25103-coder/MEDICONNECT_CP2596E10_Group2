@@ -20,9 +20,6 @@ if(!isset($_SESSION['user_id'])){
 
 $userId = $_SESSION['user_id'];
 $message = "";
-
-
-// Lấy thông tin 
 function loadUserInfo(PDO $pdo, int $userId) {
     $stmt = $pdo->prepare("
         SELECT u.user_id, u.email, u.full_name, u.phone_number, u.avatar_url,
@@ -70,8 +67,6 @@ $form = [
     'address'      => $userInfo['address'] ?? '',
 ];
 
-
-// ===== 1. CẬP NHẬT HỒ SƠ =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $form['full_name']    = trim($_POST['full_name'] ?? '');
     $form['phone_number'] = trim($_POST['phone_number'] ?? '');
@@ -175,8 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $message     = $error;
     $messageType = 'error';
 }
-
-// Avatar: chỉ hiện ảnh khi là link https, còn lại hiện chữ cái đầu của tên
 $showAvatarImg = preg_match('#^https://#i', (string)$userInfo['avatar_url']) === 1;
 $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
 $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); // Thêm dòng này
@@ -188,6 +181,7 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/article_style.css">
+    <link rel="stylesheet" href="../assets/css/patient_booking.css?v=5">
 </head>
 <body>
 <?php if ($isStaff): ?>
@@ -211,15 +205,38 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
             </header>
             <main class="content-container">
 <?php else: ?>
-    <header class="public-navbar">
-        <a href="../index.php" class="public-brand">MediConnect</a>
-        <nav class="public-nav-links">
-            <a href="../index.php" class="nav-item">Home</a>
-            <a href="../articles/news.php" class="nav-item">All Articles</a>
-            <a href="profile.php" class="nav-item active">My Profile</a>
-            <a href="logout.php" class="btn-logout">Log out</a>
-        </nav>
-    </header>
+    <?php $role = $_SESSION['role_name'] ?? ''; ?>
+                <nav class="patient-navbar">
+                        <div class="navbar-container">
+                            <a href="../index.php" class="brand-logo">MediConnect</a>
+
+                            <ul class="nav-links">
+                                <li><a href="../index.php">Home / News</a></li>
+
+                                <?php if ($role === 'PATIENT'): ?>
+                                    <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
+                                    <li><a href="../patient/my_appointments.php">My Appointments</a></li>
+                                    <li><a href="../chat.php">Consultation Chat</a></li>
+                                <?php elseif ($role === 'DOCTOR'): ?>
+                                    <li><a href="../doctor/dashboard.php">Doctor Dashboard</a></li>
+                                    <li><a href="../chat.php">Patient Chat</a></li>
+                                    <li><a href="../articles/manage.php">Manage Articles</a></li>
+                                <?php elseif ($role === 'ADMIN'): ?>
+                                    <li><a href="../admin/manage_patients.php">Admin Panel</a></li>
+                                    <li><a href="../articles/manage.php">Manage Articles</a></li>
+                                <?php endif; ?>
+
+                                <li><a href="profile.php" class="active">My Profile</a></li>
+                            </ul>
+
+                            <div class="nav-user">
+                                <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong></span>
+                                <a href="../auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </nav>
     <main class="article-container" style="max-width: 780px;">
 <?php endif; ?>
 
@@ -231,8 +248,6 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
                 <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
             </div>
         <?php endif; ?>
-
-        <!-- Thông tin tài khoản & Cập nhật hồ sơ -->
         <div class="panel-card">
             <div class="panel-header">
                 <div style="display: flex; align-items: center; gap: 14px;">
@@ -288,8 +303,6 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
                 </div>
             </form>
         </div>
-
-        <!-- Đổi mật khẩu -->
         <div class="panel-card">
             <div class="panel-header">
                 <h2 class="panel-title">Change Password</h2>

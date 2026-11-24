@@ -1,7 +1,4 @@
 <?php
-ini_set('display_error','0');
-ini_set('log_error','1');
-
 $host = '127.0.0.1';
 $db = 'mediconnect';
 $user = 'root';
@@ -9,15 +6,27 @@ $pass = '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options =[
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
+    PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-} catch(\PDOException $e){
-    error_log("Database connection error:" . $e->getMessage());
-    http_response_code(500);
-    die("Database connection error:" . $e->getMessage());
+} catch (\PDOException $e) {
+    die("Database connection error: " . $e->getMessage());
+}
+
+if (!class_exists('MyConnection')) {
+    class MyConnection {
+        public static function connectDatabase() {
+            global $host, $user, $pass, $db;
+            $conn = new mysqli($host, $user, $pass, $db);
+            if ($conn->connect_error) {
+                die("Database connection error: " . $conn->connect_error);
+            }
+            $conn->set_charset("utf8mb4");
+            return $conn;
+        }
+    }
 }

@@ -21,6 +21,10 @@ body {
     align-items: center;
     margin-bottom: 30px;
 }
+.auth-header {
+    text-align: center;
+    margin-bottom: 26px;
+}
 
 .brand-logo {
     width: 45px;
@@ -54,8 +58,15 @@ h2 {
     font-size: 28px;
     margin-bottom: 25px;
     font-weight: bold;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    line-height: 1;
 }
 
+.btn-close-alert:hover {
+    opacity: 1;
+}
 .form-group {
     margin-bottom: 20px;
 }
@@ -81,6 +92,7 @@ input[type="email"], input[type="password"] {
 input:focus {
     border-color: #00b074;
     outline: none;
+    transition: all 0.2s ease;
 }
 
 .role-container {
@@ -108,13 +120,17 @@ input:focus {
 .role-option input[type="radio"] {
     accent-color: #00b074;
 }
-
-/* Khi radio được chọn thì đổi màu viền và nền ô */
 .role-option:has(input[type="radio"]:checked) {
     border-color: #00b074;
     background: #e6f7f2;
     color: #00b074;
     font-weight: bold;
+}
+.link-mc {
+    color: #168077;
+    text-decoration: none;
+    font-size: 13.5px;
+    transition: color 0.2s ease;
 }
 
 button[type="submit"] {
@@ -143,6 +159,11 @@ button[type="submit"]:hover {
     margin-bottom: 15px;
     font-size: 13px;
     text-align: center;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 13.5px;
+    color: #64748b;
 }
 
 .success {

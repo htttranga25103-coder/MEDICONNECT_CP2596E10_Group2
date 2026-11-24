@@ -20,9 +20,7 @@ require_once '../includes/csrf.php';
             </div>
         </div>
 
-        <h2>LOG IN</h2>
-        
-        <!-- Hiển thị thông báo lỗi/thành công -->
+        <h2>LOG IN</h2>     
         <?php if (isset($_SESSION['error'])): ?>
             <div class="error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
         <?php endif; ?>
@@ -60,7 +58,7 @@ require_once '../includes/csrf.php';
 
             <button type="submit">Login</button>
         </form>
-        <p style=class="auth-footer-link">
+        <p class="auth-footer-link">
             Don't have an account? <a href="register.php">Create an account</a>
         </p>
 
