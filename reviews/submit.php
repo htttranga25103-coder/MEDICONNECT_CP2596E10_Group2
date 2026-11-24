@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -9,11 +8,11 @@ if (
     !isset($_SESSION['user_id']) ||
     !isset($_SESSION['role_name'])
 ) {
-    http_response_code(401);
-    exit("Please log in to submit a review.");
+    header("Location: ../auth/login.php");
+    exit();
 }
 
-if ($_SESSION['role_name'] !== 'PATIENT') {
+if (strtoupper((string)$_SESSION['role_name']) !== 'PATIENT') {
     http_response_code(403);
     exit("Only patients can submit reviews.");
 }
@@ -25,8 +24,8 @@ $userId = filter_var(
 );
 
 if ($userId === false || $userId <= 0) {
-    http_response_code(401);
-    exit("Invalid user session.");
+    header("Location: ../auth/login.php");
+    exit();
 }
 
 // Only accept POST requests.

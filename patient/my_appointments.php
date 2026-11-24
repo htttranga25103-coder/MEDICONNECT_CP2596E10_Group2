@@ -40,6 +40,12 @@ if ($statusFilter !== 'ALL' && in_array($statusFilter, ['PENDING', 'CONFIRMED', 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - My Appointments</title>
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=3">
+    <style>
+        .navbar-container { gap: 16px; }
+        .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
+        .nav-links > li { position: relative; white-space: nowrap; }
+        .nav-links a { white-space: nowrap; }
+    </style>
 </head>
 <body>
 <nav class="patient-navbar">
@@ -47,11 +53,12 @@ if ($statusFilter !== 'ALL' && in_array($statusFilter, ['PENDING', 'CONFIRMED', 
         <a href="../index.php" class="brand-logo">MediConnect</a>
 
         <ul class="nav-links">
-            <li><a href="../index.php">Home / News</a></li>
+            <li><a href="../index.php">Home</a></li>
             <li><a href="book_appointment.php">Book Appointment</a></li>
             <li><a href="my_appointments.php" class="active">My Appointments</a></li>
             <li><a href="../chat.php">Consultation Chat</a></li>
-            <li><a href="../auth/profile.php">My Profile</a></li>
+            <li><a href="../articles/news.php">Articles</a></li>
+            <li><a href="../reviews/index.php">Reviews</a></li>
         </ul>
 
         <div class="nav-user">
@@ -148,7 +155,7 @@ if ($statusFilter !== 'ALL' && in_array($statusFilter, ['PENDING', 'CONFIRMED', 
                                 </td>
                                 <td>
                                     <?php if ($appt['status'] === 'PENDING'): ?>
-                                        <form method="POST" action="my_appointments.php" style="display:inline;" 
+                                        <form method="POST" action="my_appointments.php" style="display:inline;"
                                               onsubmit="return confirm('Are you sure you want to cancel appointment #<?= $appt['appointment_id'] ?>?');">
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="appointment_id" value="<?= $appt['appointment_id'] ?>">

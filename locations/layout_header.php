@@ -1,4 +1,3 @@
-
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -29,34 +28,52 @@ function locationSidebarActive($pages, $currentPage)
 
     <aside class="sidebar">
 
-        <a href="../admin/manage_patients.php" class="sidebar-brand">
+        <a href="../index.php" class="sidebar-brand">
             MediConnect
         </a>
 
         <ul class="sidebar-menu">
 
             <li>
+                <a href="../index.php">
+                    Home
+                </a>
+            </li>
+
+            <li>
                 <a href="../admin/manage_patients.php">
-                    Patients
+                    Manage Patients
                 </a>
             </li>
 
             <li>
                 <a href="../doctors/admin.php">
-                    Doctor Management
+                    Manage Doctors
                 </a>
             </li>
 
             <li>
                 <a href="../reviews/index.php">
-                    Doctor Reviews
+                    Reviews Doctor
+                </a>
+            </li>
+
+            <li>
+                <a href="../articles/manage.php">
+                    Manage Articles
+                </a>
+            </li>
+
+            <li>
+                <a href="../articles/news.php">
+                    All Articles &amp; Comments
                 </a>
             </li>
 
             <li>
                 <a href="index.php"
-                   class="<?= locationSidebarActive(['index.php', 'cities.php', 'districts.php', 'streets.php'], $currentPage) ?>">
-                    Location Management
+                   class="<?= locationSidebarActive(['index.php'], $currentPage) ?>">
+                    Locations Overview
                 </a>
             </li>
 
