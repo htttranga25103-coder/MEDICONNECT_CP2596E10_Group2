@@ -54,12 +54,21 @@ try {
          ORDER BY street_name"
     );
     $streets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+/*
 } catch (PDOException $e) {
     error_log('Doctor registration data loading error: ' . $e->getMessage());
     $loadError = true;
 }
-
+*/
+    } catch (PDOException $e) {
+    // Tạm thời hiển thị chi tiết lỗi để debug
+    $_SESSION['message'] = [
+        'type' => 'error',
+        'text' => 'Lỗi SQL chi tiết: ' . $e->getMessage()
+    ];
+    header('Location: ../register.php'); // Đổi lại đúng tên file form của bạn
+    exit;
+}
 $districtJson = json_encode($districts, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '[]';
 $streetJson = json_encode($streets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '[]';
 

@@ -171,8 +171,142 @@ class AppointmentManager {
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+// Lấy doctor_id từ user_id đang đăng nhập
+    public function getDoctorIdByUserId($user_id) {
+        $stmt = $this->conn->prepare("SELECT doctor_id FROM doctors WHERE user_id = ? LIMIT 1");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        return $res ? (int)$res['doctor_id'] : null;
+    }
 
-    public function bookAppointment($patient_id, $data) {
+    // Lấy toàn bộ lịch làm việc của bác sĩ (kèm thông tin bệnh nhân nếu slot đã được đặt)
+    public function getAllSchedulesByDoctor($doctor_id, $filter_date = '') {
+        $sql = "SELECT ds.schedule_id, ds.work_date, ds.start_time, ds.end_time, ds.is_available,
+                       a.appointment_id, a.status AS appointment_status, u.full_name AS patient_name
+                FROM doctor_schedules ds
+                LEFT JOIN appointments a 
+                       ON ds.schedule_id = a.schedule_id 
+                      AND a.status NOT IN ('CANCELLED')
+                LEFT JOIN patients p ON a.patient_id = p.patient_id
+                LEFT JOIN users u ON p.user_id = u.user_id
+                WHERE ds.doctor_id = ? AND ds.work_date >= CURDATE()";
+
+        if (!empty($filter_date)) {
+            $sql .= " AND ds.work_date = ? ORDER BY ds.work_date ASC, ds.start_time ASC";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("is", $doctor_id, $filter_date);
+        } else {
+            $sql .= " ORDER BY ds.work_date ASC, ds.start_time ASC";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $doctor_id);
+        }
+
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+// Đếm tổng số lịch của bác sĩ (để tính tổng số trang)
+    public function countSchedulesByDoctor($doctor_id, $filter_date = '') {
+        $sql = "SELECT COUNT(*) AS total
+                FROM doctor_schedules
+                WHERE doctor_id = ? AND work_date >= CURDATE()";
+
+        if (!empty($filter_date)) {
+            $sql .= " AND work_date = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("is", $doctor_id, $filter_date);
+        } else {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $doctor_id);
+        }
+
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        return (int)($row['total'] ?? 0);
+    }
+
+    // Lấy danh sách lịch theo trang (LIMIT & OFFSET)
+    public function getPaginatedSchedulesByDoctor($doctor_id, $limit = 9, $offset = 0, $filter_date = '') {
+        $sql = "SELECT ds.schedule_id, ds.work_date, ds.start_time, ds.end_time, ds.is_available,
+                       a.appointment_id, a.status AS appointment_status, u.full_name AS patient_name
+                FROM doctor_schedules ds
+                LEFT JOIN appointments a 
+                       ON ds.schedule_id = a.schedule_id 
+                      AND a.status NOT IN ('CANCELLED')
+                LEFT JOIN patients p ON a.patient_id = p.patient_id
+                LEFT JOIN users u ON p.user_id = u.user_id
+                WHERE ds.doctor_id = ? AND ds.work_date >= CURDATE()";
+
+        if (!empty($filter_date)) {
+            $sql .= " AND ds.work_date = ? ORDER BY ds.work_date ASC, ds.start_time ASC LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("isii", $doctor_id, $filter_date, $limit, $offset);
+        } else {
+            $sql .= " ORDER BY ds.work_date ASC, ds.start_time ASC LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("iii", $doctor_id, $limit, $offset);
+        }
+
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    // Thêm lịch trống mới cho bác sĩ (có kiểm tra giờ hợp lệ & chống trùng ca)
+    public function addDoctorSchedule($doctor_id, $work_date, $start_time, $end_time) {
+        if (empty($work_date) || empty($start_time) || empty($end_time)) {
+            return ['status' => false, 'message' => 'Please fill in all date and time fields!'];
+        }
+
+        if ($work_date < date('Y-m-d')) {
+            return ['status' => false, 'message' => 'Cannot create a schedule in the past!'];
+        }
+
+        if ($start_time >= $end_time) {
+            return ['status' => false, 'message' => 'End time must be after start time!'];
+        }
+
+        // Kiểm tra bác sĩ đã có lịch nào bị giao nhau (overlap) trong cùng ngày chưa
+        $stmtCheck = $this->conn->prepare("
+            SELECT schedule_id 
+            FROM doctor_schedules 
+            WHERE doctor_id = ? 
+              AND work_date = ? 
+              AND (start_time < ? AND end_time > ?)
+            LIMIT 1
+        ");
+        $stmtCheck->bind_param("isss", $doctor_id, $work_date, $end_time, $start_time);
+        $stmtCheck->execute();
+
+        if ($stmtCheck->get_result()->fetch_assoc()) {
+            return ['status' => false, 'message' => 'This time slot overlaps with an existing schedule!'];
+        }
+
+        $stmtIns = $this->conn->prepare("
+            INSERT INTO doctor_schedules (doctor_id, work_date, start_time, end_time, is_available) 
+            VALUES (?, ?, ?, ?, 1)
+        ");
+        $stmtIns->bind_param("isss", $doctor_id, $work_date, $start_time, $end_time);
+
+        if ($stmtIns->execute()) {
+            return ['status' => true, 'message' => 'New available schedule added successfully!'];
+        }
+        return ['status' => false, 'message' => 'Failed to add schedule. Please try again.'];
+    }
+
+    // Xóa lịch trống (chỉ cho xóa khi is_available = 1 và chưa có bệnh nhân đặt)
+    public function deleteDoctorSchedule($doctor_id, $schedule_id) {
+        $stmt = $this->conn->prepare("
+            DELETE FROM doctor_schedules 
+            WHERE schedule_id = ? AND doctor_id = ? AND is_available = 1
+        ");
+        $stmt->bind_param("ii", $schedule_id, $doctor_id);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            return ['status' => true, 'message' => 'Schedule slot deleted successfully!'];
+        }
+        return ['status' => false, 'message' => 'Cannot delete this slot (it may already be booked or does not exist).'];
+    }
+     public function bookAppointment($patient_id, $data) {
         $doctor_id = (int)($data['doctor_id'] ?? 0);
         $schedule_id = (int)($data['schedule_id'] ?? 0);
         $symptoms_note = trim($data['symptoms_note'] ?? '');
@@ -184,7 +318,19 @@ class AppointmentManager {
         try {
             $this->conn->begin_transaction();
 
-            $stmtCheck = $this->conn->prepare("SELECT is_available, work_date FROM doctor_schedules WHERE schedule_id = ? AND doctor_id = ? FOR UPDATE");
+            // 1. Khóa dòng của bệnh nhân để chống bấm đặt 2 tab cùng 1 giây (Race Condition)
+            $stmtLockPatient = $this->conn->prepare("SELECT patient_id FROM patients WHERE patient_id = ? FOR UPDATE");
+            $stmtLockPatient->bind_param("i", $patient_id);
+            $stmtLockPatient->execute();
+            $stmtLockPatient->get_result();
+
+            // 2. Khóa và lấy thông tin ca khám đang chọn
+            $stmtCheck = $this->conn->prepare("
+                SELECT is_available, work_date, start_time, end_time 
+                FROM doctor_schedules 
+                WHERE schedule_id = ? AND doctor_id = ? 
+                FOR UPDATE
+            ");
             $stmtCheck->bind_param("ii", $schedule_id, $doctor_id);
             $stmtCheck->execute();
             $slot = $stmtCheck->get_result()->fetch_assoc();
@@ -194,6 +340,42 @@ class AppointmentManager {
                 return ['status' => false, 'message' => 'Sorry, this schedule slot is no longer available!'];
             }
 
+            // (Tùy chọn) Chặn đặt lịch của ngày đã qua
+            if ($slot['work_date'] < date('Y-m-d')) {
+                $this->conn->rollback();
+                return ['status' => false, 'message' => 'Cannot book an appointment in the past!'];
+            }
+
+            // 3. Kiểm tra bệnh nhân có bị trùng lịch với bác sĩ khác (hoặc chính bác sĩ này) không
+            // Dùng SELECT 1 để không phụ thuộc tên cột khóa chính của bảng appointments
+            $stmtConflict = $this->conn->prepare("
+                SELECT 1 
+                FROM appointments a
+                INNER JOIN doctor_schedules ds ON a.schedule_id = ds.schedule_id
+                WHERE a.patient_id = ?
+                  AND a.status NOT IN ('CANCELLED', 'REJECTED')
+                  AND ds.work_date = ?
+                  AND (ds.start_time < ? AND ds.end_time > ?)
+                LIMIT 1
+            ");
+            $stmtConflict->bind_param(
+                "isss",
+                $patient_id,
+                $slot['work_date'],
+                $slot['end_time'],
+                $slot['start_time']
+            );
+            $stmtConflict->execute();
+
+            if ($stmtConflict->get_result()->fetch_assoc()) {
+                $this->conn->rollback();
+                return [
+                    'status' => false, 
+                    'message' => 'You already have another appointment scheduled during this time slot!'
+                ];
+            }
+
+            // 4. Lưu lịch hẹn và cập nhật trạng thái slot
             $stmtIns = $this->conn->prepare("INSERT INTO appointments (patient_id, doctor_id, schedule_id, status, symptoms_note) VALUES (?, ?, ?, 'PENDING', ?)");
             $stmtIns->bind_param("iiis", $patient_id, $doctor_id, $schedule_id, $symptoms_note);
             $stmtIns->execute();
@@ -206,44 +388,7 @@ class AppointmentManager {
             return ['status' => true, 'message' => 'Appointment booked successfully! Status is currently PENDING.'];
         } catch (Exception $e) {
             $this->conn->rollback();
-            return ['status' => false, 'message' => 'Booking error: ' . $e->getMessage()];
-        }
-    }
-
-    public function cancelAppointment($appointment_id, $patient_id) {
-        try {
-            $this->conn->begin_transaction();
-
-            $stmtGet = $this->conn->prepare("SELECT schedule_id, status FROM appointments WHERE appointment_id = ? AND patient_id = ? FOR UPDATE");
-            $stmtGet->bind_param("ii", $appointment_id, $patient_id);
-            $stmtGet->execute();
-            $appt = $stmtGet->get_result()->fetch_assoc();
-
-            if (!$appt) {
-                $this->conn->rollback();
-                return ['status' => false, 'message' => 'Appointment not found!'];
-            }
-
-            if ($appt['status'] !== 'PENDING') {
-                $this->conn->rollback();
-                return ['status' => false, 'message' => 'Only PENDING appointments can be cancelled!'];
-            }
-
-            $schedule_id = (int)$appt['schedule_id'];
-
-            $stmtDel = $this->conn->prepare("DELETE FROM appointments WHERE appointment_id = ?");
-            $stmtDel->bind_param("i", $appointment_id);
-            $stmtDel->execute();
-
-            $stmtOpen = $this->conn->prepare("UPDATE doctor_schedules SET is_available = 1 WHERE schedule_id = ?");
-            $stmtOpen->bind_param("i", $schedule_id);
-            $stmtOpen->execute();
-
-            $this->conn->commit();
-            return ['status' => true, 'message' => "Appointment #$appointment_id has been cancelled and the time slot is reopened."];
-        } catch (Exception $e) {
-            $this->conn->rollback();
-            return ['status' => false, 'message' => 'Error cancelling appointment: ' . $e->getMessage()];
+            return ['status' => false, 'message' => 'Booking failed due to a system error. Please try again!'];
         }
     }
 

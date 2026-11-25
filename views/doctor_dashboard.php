@@ -68,6 +68,7 @@ foreach ($appointments as $item) {
             <ul class="nav-links">
                 <li><a href="../index.php">Home</a></li>
                 <li><a href="doctor_dashboard.php" class="active">Doctor Portal</a></li>
+                <li><a href="../doctor/manage_schedules.php" class="nav-link">Manage Schedules</a></li>
                 <li><a href="../chat.php">Consultation Chat</a></li>
                 <li><a href="../articles/news.php">Articles</a></li>
                 <li><a href="../reviews/index.php">Reviews</a></li>
