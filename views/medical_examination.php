@@ -169,7 +169,7 @@ $isNewVisit = empty($otherVisits);
                             <tr>
                                 <td>
                                     <label><small><strong>DATE OF BIRTH</strong></small></label><br>
-                                    <input type="text" value="<?= $e($profile['date_of_birth'] ?: 'Chưa cập nhật') ?>" size="35" readonly>
+                                    <input type="text" value="<?= $e($profile['date_of_birth'] ?: 'Not yet updated') ?>" size="35" readonly>
                                 </td>
                                 <td></td>
                             </tr>
