@@ -33,6 +33,7 @@ try {
     error_log("Load categories error: " . $e->getMessage());
     $categories = [];
 }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_article'])) {
     foreach ($form as $key => $unused) {
         $form[$key] = trim($_POST[$key] ?? '');
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article'])) {
         $messageType = 'error';
     }
 }
+
 $articles      = [];
 $totalArticles = 0;
 $totalPages    = 1;
@@ -136,47 +138,63 @@ $submitName  = 'create_article';
 $submitLabel = 'Post an article';
 ?>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Articles - MediConnect</title>
-    <link rel="stylesheet" href="../assets/css/article_style.css">
+    <link rel="stylesheet" href="../assets/css/article_style.css?v=2">
+    <style>
+        .topbar {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        .topbar-user span {
+            color: #1e293b !important;
+        }
+        .btn-logout {
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+            border-radius: 8px !important;
+            padding: 7px 16px !important;
+            font-weight: 700 !important;
+        }
+    </style>
 </head>
 <body>
     <div class="admin-wrapper">
-        <aside class="sidebar">
-            <a href="../index.php" class="sidebar-brand">MediConnect</a>
-            <ul class="sidebar-menu">
-                <li><a href="../index.php">Home</a></li>
-                <?php if ($isAdmin): ?>
-                    <li><a href="../admin/manage_patients.php">Manage Patients</a></li>
-                    <li><a href="../doctors/admin.php">Manage Doctors</a></li>
-                    <li><a href="../reviews/index.php">Reviews Doctor</a></li>
-                    <li><a href="manage.php" class="active">Manage Articles</a></li>
-                    <li><a href="news.php">All Articles &amp; Comments</a></li>
-                    <li><a href="../locations/index.php">Manage Locations</a></li>
-                <?php else: ?>
-                    <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
-                    <li><a href="../chat.php">Consultation Chat</a></li>
-                    <li><a href="news.php">Articles</a></li>
-                    <li><a href="../reviews/index.php">Reviews</a></li>
-                    <li><a href="manage.php" class="active">Manage Articles</a></li>
-                <?php endif; ?>
-            </ul>
-        </aside>
+        <?php if ($isAdmin): ?>
+            <!-- SHARED ADMIN SIDEBAR WITH ICONS -->
+            <?php
+                $adminActivePage = 'manage.php';
+                require_once __DIR__ . '/../includes/admin_sidebar.php';
+            ?>
+        <?php else: ?>
+            <!-- DOCTOR AUTHOR SIDEBAR -->
+            <aside class="sidebar" style="background-color: #0f766e;">
+                <a href="../index.php" class="sidebar-brand">MediConnect</a>
+                <ul class="sidebar-menu">
+                    <li><a href="../views/doctor_dashboard.php"><img src="../images/icons/overview.png" width="20" height="20" alt="" style="vertical-align:middle; margin-right:8px;">Doctor Portal</a></li>
+                    <li><a href="../chat.php"><img src="../images/icons/comment.png" width="20" height="20" alt="" style="vertical-align:middle; margin-right:8px;">Consultation Chat</a></li>
+                    <li><a href="news.php"><img src="../images/icons/new.png" width="20" height="20" alt="" style="vertical-align:middle; margin-right:8px;">Public Articles</a></li>
+                    <li><a href="../reviews/index.php"><img src="../images/icons/review.png" width="20" height="20" alt="" style="vertical-align:middle; margin-right:8px;">Reviews</a></li>
+                    <li><a href="manage.php" class="active"><img src="../images/icons/new.png" width="20" height="20" alt="" style="vertical-align:middle; margin-right:8px;">Manage Articles</a></li>
+                </ul>
+            </aside>
+        <?php endif; ?>
 
         <div class="main-area">
             <header class="topbar">
-                <div class="topbar-user">
-                    <span>Welcome, <strong><?php echo e($_SESSION['full_name'] ?? 'Author'); ?></strong> (<?php echo e($_SESSION['role_name'] ?? ''); ?>)</span>
-                    <a href="../auth/logout.php" class="btn-logout">Log out</a>
+                <div class="topbar-user" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 16px; font-weight: 700;">
+                        Article Management — Welcome, <strong><?php echo e($_SESSION['full_name'] ?? 'Author'); ?></strong> (<?php echo e($_SESSION['role_name'] ?? ''); ?>)
+                    </span>
+                    <a href="../auth/logout.php" class="btn-logout" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
                 </div>
             </header>
 
             <main class="content-container">
-                <h1 class="page-title">Manage Article</h1>
-
                 <?php if ($message !== ''): ?>
                     <div class="alert-box <?php echo $messageType === 'success' ? 'alert-success' : 'alert-error'; ?>">
                         <span><?php echo e($message); ?></span>

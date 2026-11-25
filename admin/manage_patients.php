@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     if ($result) {
-        $_SESSION[$result['status'] ? 'success' : 'error'] =$result['message'];
+        $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
     }
 
     $redirectParams = array_filter([
@@ -37,25 +37,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit();
 }
 
-$addressData =$patientManager->getAddressOptions();
-$cities      =$addressData['cities'];
-$districts   =$addressData['districts'];
-$streets     =$addressData['streets'];
+$addressData = $patientManager->getAddressOptions();
+$cities      = $addressData['cities'];
+$districts   = $addressData['districts'];
+$streets     = $addressData['streets'];
 
 $keyword = trim($_GET['keyword'] ?? '');
 
 $limit         = 7;
 $currentPage   = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
-$totalPatients =$patientManager->countPatients($keyword);$totalPages    = max(1, (int)ceil($totalPatients / $limit));
+$totalPatients = $patientManager->countPatients($keyword);
+$totalPages    = max(1, (int)ceil($totalPatients / $limit));
 
-if ($currentPage >$totalPages) {
-    $currentPage =$totalPages;
+if ($currentPage > $totalPages) {
+    $currentPage = $totalPages;
 }
-$offset   = ($currentPage - 1) *$limit;
-$patients = $patientManager->getPatients($keyword, $limit,$offset);
+$offset   = ($currentPage - 1) * $limit;
+$patients = $patientManager->getPatients($keyword, $limit, $offset);
 
 $startItem = $totalPatients > 0 ? ($offset + 1) : 0;
-$endItem   = min($offset + $limit,$totalPatients);
+$endItem   = min($offset + $limit, $totalPatients);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -63,131 +64,38 @@ $endItem   = min($offset + $limit,$totalPatients);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Patient Management</title>
-    <link rel="stylesheet" href="../assets/css/admin_style.css?v=3">
+    <link rel="stylesheet" href="../assets/css/admin_style.css?v=4">
     <style>
-        .admin-quick-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: nowrap;
-            gap: 12px;
-            padding: 10px 20px;
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            overflow: visible;
+        .topbar {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
         }
-        .admin-quick-brand {
-            font-weight: 700;
-            color: #0f766e;
-            text-decoration: none;
-            white-space: nowrap;
+        .topbar-user span {
+            color: #1e293b !important;
         }
-        .admin-quick-links {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 8px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        .admin-quick-links > li {
-            position: relative;
-            white-space: nowrap;
-        }
-        .admin-quick-links a {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 6px;
-            text-decoration: none;
-            color: #1e293b;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-        .admin-quick-links a:hover,
-        .admin-quick-links a.active {
-            background: #0f766e;
-            color: #ffffff;
-        }
-        .admin-quick-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            min-width: 215px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-            list-style: none;
-            padding: 6px 0;
-            margin-top: 4px;
-            z-index: 1000;
-        }
-        .admin-quick-dropdown:hover .admin-quick-dropdown-menu {
-            display: block;
-        }
-        .admin-quick-dropdown-menu li a {
-            display: block;
-            border-radius: 0;
-            padding: 8px 14px;
-            color: #1e293b;
-        }
-        .admin-quick-dropdown-menu li a:hover {
-            background: #f1f5f9;
-            color: #0f766e;
+        .btn-logout {
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+            border-radius: 8px !important;
+            padding: 7px 16px !important;
+            font-weight: 700 !important;
         }
     </style>
 </head>
 <body>
 
-<nav class="admin-quick-nav">
-    <a href="../index.php" class="admin-quick-brand">MediConnect Admin</a>
-
-    <ul class="admin-quick-links">
-        <li><a href="../index.php">Home</a></li>
-        <li><a href="manage_patients.php" class="active">Manage Patients</a></li>
-
-        <li class="admin-quick-dropdown">
-            <a href="../doctors/admin.php">Manage Doctors &#9662;</a>
-            <ul class="admin-quick-dropdown-menu">
-                <li><a href="../doctors/admin.php">Doctors &amp; Approval</a></li>
-                <li><a href="../doctors/index.php">Doctors List (Public)</a></li>
-                <li><a href="../doctors/register.php">Doctor Register</a></li>
-                <li><a href="../reviews/index.php">Reviews Doctor</a></li>
-            </ul>
-        </li>
-
-        <li class="admin-quick-dropdown">
-            <a href="../articles/manage.php">Manage Articles &#9662;</a>
-            <ul class="admin-quick-dropdown-menu">
-                <li><a href="../articles/manage.php">Add / Edit / Delete Articles</a></li>
-                <li><a href="../articles/news.php">All Articles &amp; Comments</a></li>
-            </ul>
-        </li>
-
-        <li><a href="../locations/index.php">Manage Locations</a></li>
-    </ul>
-</nav>
-
 <div class="admin-wrapper">
-    <aside class="sidebar">
-        <a href="../index.php" class="sidebar-brand">MediConnect</a>
-        <ul class="sidebar-menu">
-            <li><a href="../index.php">Home</a></li>
-            <li><a href="manage_patients.php" class="active">Manage Patients</a></li>
-            <li><a href="../doctors/admin.php">Manage Doctors</a></li>
-            <li><a href="../reviews/index.php">Reviews Doctor</a></li>
-            <li><a href="../articles/manage.php">Manage Articles</a></li>
-            <li><a href="../articles/news.php">All Articles &amp; Comments</a></li>
-            <li><a href="../locations/index.php">Manage Locations</a></li>
-        </ul>
-    </aside>
+    <!-- SHARED ADMIN SIDEBAR WITH ICONS -->
+    <?php
+        $adminActivePage = 'manage_patients.php';
+        require_once __DIR__ . '/../includes/admin_sidebar.php';
+    ?>
 
     <div class="main-area">
         <header class="topbar">
-            <div class="topbar-user">
-                <span>Welcome, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'Admin') ?></strong></span>
+            <div class="topbar-user" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: 700;">Patient Management — Welcome, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'Admin') ?></strong></span>
                 <a href="../auth/logout.php" class="btn-logout" onclick="return confirm('Are you sure you want to log out?');">
                     Logout
                 </a>
@@ -195,7 +103,6 @@ $endItem   = min($offset + $limit,$totalPatients);
         </header>
 
         <main class="content-container">
-            <h2 class="page-title">Patient Management</h2>
             <div class="stat-summary-row">
                 <div class="stat-summary-card">
                     <div class="stat-summary-label">Total accounts</div>
@@ -209,7 +116,7 @@ $endItem   = min($offset + $limit,$totalPatients);
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert-box alert-success">
                     <span><?= htmlspecialchars($_SESSION['success']) ?></span>
-                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
+                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">&#10005;</button>
                 </div>
                 <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
@@ -217,7 +124,7 @@ $endItem   = min($offset + $limit,$totalPatients);
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert-box alert-error">
                     <span><?= htmlspecialchars($_SESSION['error']) ?></span>
-                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
+                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">&#10005;</button>
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
@@ -282,7 +189,7 @@ $endItem   = min($offset + $limit,$totalPatients);
                             <label class="form-label">City / Province</label>
                             <select name="city_id" id="city_id" class="form-select">
                                 <option value="">-- Select City --</option>
-                                <?php foreach ($cities as$c): ?>
+                                <?php foreach ($cities as $c): ?>
                                     <option value="<?= $c['city_id'] ?>"><?= htmlspecialchars($c['city_name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -292,7 +199,7 @@ $endItem   = min($offset + $limit,$totalPatients);
                             <label class="form-label">District</label>
                             <select name="district_id" id="district_id" class="form-select">
                                 <option value="">-- Select District --</option>
-                                <?php foreach ($districts as$d): ?>
+                                <?php foreach ($districts as $d): ?>
                                     <option value="<?= $d['district_id'] ?>"><?= htmlspecialchars($d['district_name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -302,7 +209,7 @@ $endItem   = min($offset + $limit,$totalPatients);
                             <label class="form-label">Street</label>
                             <select name="street_id" id="street_id" class="form-select">
                                 <option value="">-- Select Street --</option>
-                                <?php foreach ($streets as$s): ?>
+                                <?php foreach ($streets as $s): ?>
                                     <option value="<?= $s['street_id'] ?>"><?= htmlspecialchars($s['street_name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -354,9 +261,10 @@ $endItem   = min($offset + $limit,$totalPatients);
                         </thead>
                         <tbody>
                             <?php if (count($patients) > 0): ?>
-                                <?php foreach ($patients as$row): ?>
+                                <?php foreach ($patients as $row): ?>
                                     <?php
-                                        $addrParts = array_filter([$row['address'], $row['street_name'],$row['district_name'], $row['city_name']]);$fullAddress = !empty($addrParts) ? implode(', ', $addrParts) : '<span class="text-muted-italic">Not updated</span>';
+                                        $addrParts = array_filter([$row['address'], $row['street_name'], $row['district_name'], $row['city_name']]);
+                                        $fullAddress = !empty($addrParts) ? implode(', ', $addrParts) : '<span class="text-muted-italic">Not updated</span>';
                                         $createdDate = !empty($row['created_at']) ? date('d/m/Y', strtotime($row['created_at'])) : '---';
                                     ?>
                                     <tr>
@@ -402,26 +310,29 @@ $endItem   = min($offset + $limit,$totalPatients);
                 </div>
 
                 <?php
-                $buildPageUrl = function(int$page) use ($keyword): string {$params = array_filter([
-                        'keyword' => $keyword !== '' ?$keyword : null,
-                        'page'    => $page > 1 ?$page : null,
+                $buildPageUrl = function(int $page) use ($keyword): string {
+                    $params = array_filter([
+                        'keyword' => $keyword !== '' ? $keyword : null,
+                        'page'    => $page > 1 ? $page : null,
                     ]);
                     return 'manage_patients.php' . (!empty($params) ? '?' . http_build_query($params) : '');
                 };
 
                 $pageNumbers = [];
                 if ($totalPages <= 5) {
-                    $pageNumbers = range(1,$totalPages);
+                    $pageNumbers = range(1, $totalPages);
                 } else {
                     $pageNumbers[] = 1;
-                    if ($currentPage > 3) {$pageNumbers[] = '...';
+                    if ($currentPage > 3) {
+                        $pageNumbers[] = '...';
                     }
-                    for ($i = max(2,$currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1);$i++) {
-                        $pageNumbers[] =$i;
+                    for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++) {
+                        $pageNumbers[] = $i;
                     }
-                    if ($currentPage < $totalPages - 2) {$pageNumbers[] = '...';
+                    if ($currentPage < $totalPages - 2) {
+                        $pageNumbers[] = '...';
                     }
-                    $pageNumbers[] =$totalPages;
+                    $pageNumbers[] = $totalPages;
                 }
                 ?>
 
@@ -439,27 +350,28 @@ $endItem   = min($offset + $limit,$totalPatients);
                             <span class="pg-btn disabled">Previous</span>
                         <?php endif; ?>
 
-                        <?php foreach ($pageNumbers as$p): ?>
+                        <?php foreach ($pageNumbers as $p): ?>
                             <?php if ($p === '...'): ?>
                                 <span class="pg-btn dots">...</span>
                             <?php else: ?>
-                                <a href="<?= $buildPageUrl($p) ?>" class="pg-btn <?= ($p ===$currentPage) ? 'active' : '' ?>">
+                                <a href="<?= $buildPageUrl($p) ?>" class="pg-btn <?= ($p === $currentPage) ? 'active' : '' ?>">
                                     <?= $p ?>
                                 </a>
                             <?php endif; ?>
                         <?php endforeach; ?>
 
-                        <?php if ($currentPage <$totalPages): ?>
+                        <?php if ($currentPage < $totalPages): ?>
                             <a href="<?= $buildPageUrl($currentPage + 1) ?>" class="pg-btn">Next</a>
                         <?php else: ?>
                             <span class="pg-btn disabled">Next</span>
                         <?php endif; ?>
                     </div>
                 </div>
+            </div>
         </main>
 
         <footer class="admin-footer">
-            <div>© 2026 MediConnect. All rights reserved.</div>
+            <div>&copy; 2026 MediConnect. All rights reserved.</div>
             <div class="footer-links">
                 <a href="#">Terms</a>
                 <a href="#">Privacy</a>
@@ -469,13 +381,20 @@ $endItem   = min($offset + $limit,$totalPatients);
     </div>
 </div>
 
+<!-- Hidden Delete Form -->
+<form method="POST" action="manage_patients.php" id="deletePatientForm" style="display:none;">
+    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="patient_id" id="delete_patient_id" value="">
+    <input type="hidden" name="current_keyword" value="<?= htmlspecialchars($keyword) ?>">
+    <input type="hidden" name="current_page" value="<?= $currentPage ?>">
+</form>
+
 <script>
     const form = document.getElementById('patientForm');
     const formHeader = document.getElementById('form_header');
     const formAction = document.getElementById('form_action');
     const btnSubmit = document.getElementById('btn_submit');
     const btnCancel = document.getElementById('btn_cancel');
-    const btnDeleteInForm = document.getElementById('btn_delete_in_form');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const passwordLabel = document.getElementById('password_label');
@@ -483,4 +402,50 @@ $endItem   = min($offset + $limit,$totalPatients);
     function editPatient(data) {
         formAction.value = 'edit';
         document.getElementById('patient_id').value = data.patient_id;
-        document.getElementById('user_id').value = data.user
+        document.getElementById('user_id').value = data.user_id;
+        document.getElementById('full_name').value = data.full_name || '';
+        emailInput.value = data.email || '';
+        document.getElementById('phone_number').value = data.phone_number || '';
+        document.getElementById('date_of_birth').value = data.date_of_birth || '';
+        document.getElementById('gender').value = data.gender || '';
+        document.getElementById('is_active').value = data.is_active ?? '1';
+        document.getElementById('city_id').value = data.city_id || '';
+        document.getElementById('district_id').value = data.district_id || '';
+        document.getElementById('street_id').value = data.street_id || '';
+        document.getElementById('address').value = data.address || '';
+
+        passwordInput.value = '';
+        passwordInput.required = false;
+        passwordLabel.innerHTML = 'New Password <small style="color:#64748b; font-weight:normal;">(Leave blank to keep current)</small>';
+
+        formHeader.textContent = 'Edit Patient #' + data.patient_id;
+        btnSubmit.textContent = 'Save Changes';
+        btnCancel.classList.remove('d-none');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+        form.reset();
+        formAction.value = 'add';
+        document.getElementById('patient_id').value = '';
+        document.getElementById('user_id').value = '';
+
+        passwordInput.required = true;
+        passwordLabel.innerHTML = 'Password <span class="req">*</span>';
+
+        formHeader.textContent = 'Add New Patient';
+        btnSubmit.textContent = 'Add Patient';
+        btnCancel.classList.add('d-none');
+    }
+
+    function deletePatient(patientId, fullName) {
+        if (confirm('Are you sure you want to delete patient "' + fullName + '"? This action cannot be undone.')) {
+            document.getElementById('delete_patient_id').value = patientId;
+            document.getElementById('deletePatientForm').submit();
+        }
+    }
+</script>
+
+</body>
+</html>
