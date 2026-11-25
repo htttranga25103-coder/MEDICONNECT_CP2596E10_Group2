@@ -17,8 +17,7 @@ class Doctor {
         JOIN users u ON d.user_id = u.user_id
         LEFT JOIN specializations s ON d.specialization_id = s.specialization_id
         ";
-
-        // Chỉ thêm LIMIT khi có truyền vào một số cụ thể
+        
         if ($limit !== null) {
             $sql .= " LIMIT " . (int)$limit;
         }
@@ -35,7 +34,6 @@ class Doctor {
         $conn->close();
         return $doctors;
     }
-
        
     public static function getLatestArticles($limit = null) {
         $conn = Connection::Connectdb();
