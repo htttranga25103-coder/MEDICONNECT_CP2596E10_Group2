@@ -18,11 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 $doctorInfo = DoctorDashboard::getDoctorInfo($doctor_id);
 $allAppointments = DoctorDashboard::getDoctorAppointments($doctor_id) ?: [];
+
 $appointments = array_values(array_filter($allAppointments, function ($a) {
-    return strtoupper(trim((string)($a['status'] ?? ''))) !== 'CANCELLED';
+    return strtoupper(trim((string)($a['status'] ?? ''))) === 'CONFIRMED';
 }));
+
 $pendingAppointments = [];
-foreach ($appointments as $item) {
+foreach ($allAppointments as $item) {
     if (strtoupper(trim((string)($item['status'] ?? ''))) === 'PENDING') {
         $pendingAppointments[] = $item;
     }
