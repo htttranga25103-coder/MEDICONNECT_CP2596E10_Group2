@@ -582,12 +582,12 @@ $canSubmit = !$loadError && $hasSpecializations;
                     <div class="field-hint">At least 8 characters, including letters and numbers.</div>
                 </div>
 
-                <div class="form-group">
+               <div class="form-group">
                     <label class="form-label" for="confirm_password">
                         Confirm password <span class="required">*</span>
                     </label>
                     <div class="password-wrapper">
-                        <input class="form-control" type="password" id="confirm_password" name="confirm_password" min="8" placeholder="Confirm your password" required>
+                        <input class="form-control" type="password" id="confirm_password" name="confirm_password" minlength="8" placeholder="Confirm your password" required>
                         <button class="toggle-password" type="button" data-target="confirm_password">Show</button>
                     </div>
                 </div>

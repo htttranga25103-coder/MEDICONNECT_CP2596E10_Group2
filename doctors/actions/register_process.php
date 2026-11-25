@@ -118,11 +118,27 @@ if (
     $confirm_password === '' ||
     $specializationInput === '' ||
     $cityInput === '' ||
-    $districtInput === '' ||
-    $streetInput === ''
+    $districtInput === ''
 ) {
     redirectWithMessage(
         'Please complete all required fields.',
+        'error',
+        $old
+    );
+}
+
+// Validate city, district and optional street IDs.
+$city_id = filter_var($cityInput, FILTER_VALIDATE_INT);
+$district_id = filter_var($districtInput, FILTER_VALIDATE_INT);
+$street_id = ($streetInput === '') ? null : filter_var($streetInput, FILTER_VALIDATE_INT);
+
+if (
+    $city_id === false || $city_id <= 0 ||
+    $district_id === false || $district_id <= 0 ||
+    ($streetInput !== '' && ($street_id === false || $street_id <= 0))
+) {
+    redirectWithMessage(
+        'Please select a valid residential address.',
         'error',
         $old
     );
@@ -336,8 +352,6 @@ function cleanupUploadedAvatar($avatarUrl)
 }
 
 try {
-    $pdo->beginTransaction();
-
     // Find DOCTOR role.
     $roleStmt = $pdo->prepare(
         "SELECT role_id
@@ -366,7 +380,6 @@ try {
     $checkEmail->execute([$email]);
 
     if ($checkEmail->fetch(PDO::FETCH_ASSOC)) {
-        $pdo->rollBack();
         cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
@@ -387,7 +400,6 @@ try {
     $checkSpecialization->execute([$specialization_id]);
 
     if (!$checkSpecialization->fetch(PDO::FETCH_ASSOC)) {
-        $pdo->rollBack();
         cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
@@ -409,7 +421,6 @@ try {
     $checkDistrict->execute([$district_id, $city_id]);
 
     if (!$checkDistrict->fetch(PDO::FETCH_ASSOC)) {
-        $pdo->rollBack();
         cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
@@ -419,26 +430,27 @@ try {
         );
     }
 
-    // Check street belongs to selected district.
-    $checkStreet = $pdo->prepare(
-        "SELECT street_id
-         FROM streets
-         WHERE street_id = ?
-           AND district_id = ?
-         LIMIT 1"
-    );
-
-    $checkStreet->execute([$street_id, $district_id]);
-
-    if (!$checkStreet->fetch(PDO::FETCH_ASSOC)) {
-        $pdo->rollBack();
-        cleanupUploadedAvatar($avatarUrl);
-
-        redirectWithMessage(
-            'The selected street does not belong to the selected district.',
-            'error',
-            $old
+    // Check street belongs to selected district if provided.
+    if ($street_id !== null) {
+        $checkStreet = $pdo->prepare(
+            "SELECT street_id
+             FROM streets
+             WHERE street_id = ?
+               AND district_id = ?
+             LIMIT 1"
         );
+
+        $checkStreet->execute([$street_id, $district_id]);
+
+        if (!$checkStreet->fetch(PDO::FETCH_ASSOC)) {
+            cleanupUploadedAvatar($avatarUrl);
+
+            redirectWithMessage(
+                'The selected street does not belong to the selected district.',
+                'error',
+                $old
+            );
+        }
     }
 
     // Hash password.
@@ -447,6 +459,8 @@ try {
     if ($password_hash === false) {
         throw new RuntimeException('Password hashing failed.');
     }
+
+    $pdo->beginTransaction();
 
     // Create user account with avatar_url.
     $insertUser = $pdo->prepare(
@@ -517,7 +531,6 @@ try {
         'Registration successful! Your doctor account is waiting for administrator approval.',
         'success'
     );
-
 } catch (PDOException $exception) {
 
     if ($pdo->inTransaction()) {
