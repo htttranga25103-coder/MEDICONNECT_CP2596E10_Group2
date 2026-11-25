@@ -5,10 +5,8 @@ require_once __DIR__ . '/../models/doctor_dashboard_class.php';
 $doctor_id = $_SESSION['doctor_id'] ?? 1;
 $appointment_id = (int)($_GET['appointment_id'] ?? $_POST['appointment_id'] ?? 0);
 
-// Lấy dữ liệu từ DB
 $profile = $appointment_id > 0 ? DoctorDashboard::getPatientProfileByAppointment($appointment_id) : null;
 
-// Không có lịch hẹn hoặc lịch hẹn không thuộc bác sĩ này -> quay về dashboard
 if (!$profile || (int)$profile['doctor_id'] !== (int)$doctor_id) {
     header('Location: doctor_dashboard.php');
     exit;
@@ -17,7 +15,6 @@ if (!$profile || (int)$profile['doctor_id'] !== (int)$doctor_id) {
 $flashMessage = '';
 $flashType = 'success';
 
-// ===== Xử lý form =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -25,8 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'complete') {
         $diagnosisPost = trim((string)($_POST['diagnosis'] ?? ''));
         $notesPost = trim((string)($_POST['symptoms'] ?? ''));
-
-        // Gom đơn thuốc thành văn bản: mỗi dòng "Tên thuốc — Hướng dẫn"
+        
         $medLines = [];
         $medNames = $_POST['med_name'] ?? [];
         $medNotes = $_POST['med_note'] ?? [];
@@ -41,25 +37,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $treatmentPlanPost = implode("\n", $medLines);
 
         if ($diagnosisPost === '') {
-            $flashMessage = 'Vui lòng nhập chẩn đoán trước khi hoàn tất.';
+            $flashMessage = 'Please enter a diagnosis before completing.';
             $flashType = 'error';
         } elseif (DoctorDashboard::saveMedicalRecord($appointment_id, $doctor_id, $diagnosisPost, $treatmentPlanPost, $notesPost)) {
             header('Location: doctor_dashboard.php');
             exit;
         } else {
-            $flashMessage = 'Không thể lưu hồ sơ bệnh án.';
+            $flashMessage = 'Cannot be saved to the medical record.';
             $flashType = 'error';
         }
     }
-
-    // Tải lại dữ liệu sau khi cập nhật
+    
     $profile = DoctorDashboard::getPatientProfileByAppointment($appointment_id);
 }
 
 $doctorInfo = DoctorDashboard::getDoctorInfo($doctor_id);
 $history = DoctorDashboard::getPatientVisitHistory((int)$profile['patient_id']);
 
-// Giá trị điền sẵn cho form: dữ liệu vừa nhập (nếu bị lỗi) > ghi chú triệu chứng của bệnh nhân
 $formDiagnosis = $_POST['diagnosis'] ?? '';
 $formNotes = $_POST['symptoms'] ?? ($profile['symptoms_note'] ?? '');
 
@@ -119,7 +113,7 @@ $isNewVisit = empty($otherVisits);
                 <tr>
                     <td align="left">
                         <h2><?= $e($profile['full_name']) ?></h2>
-                        <p>📞 <?= $e($profile['phone_number'] ?: 'Chưa cập nhật') ?> | ✉️ <?= $e($profile['email'] ?: 'Chưa cập nhật') ?></p>
+                        <p>📞 <?= $e($profile['phone_number'] ?: 'Chưa cập nhật') ?> | ✉️ <?= $e($profile['email'] ?: 'Not yet updated') ?></p>
                     </td>
                     <td width="500" align="left">
                         <table width="100%" border="0" cellpadding="3">
@@ -191,7 +185,7 @@ $isNewVisit = empty($otherVisits);
                             <tr>
                                 <td>
                                     <label><small><strong>ADDRESS</strong></small></label><br>
-                                    <input type="text" value="<?= $e($profile['address'] ?: 'Chưa cập nhật') ?>" size="75" readonly>
+                                    <input type="text" value="<?= $e($profile['address'] ?: 'Not yet updated') ?>" size="75" readonly>
                                 </td>
                             </tr>
                         </table>
@@ -213,8 +207,8 @@ $isNewVisit = empty($otherVisits);
                                                     <td align="right"><small><?= (int)$h['appointment_id'] === $appointment_id ? '<mark>Current visit</mark> ' : '' ?>Dr. <?= $e($h['doctor_name']) ?></small></td>
                                                 </tr>
                                             </table>
-                                            <p><strong>Diagnosis: <?= !empty($h['diagnosis']) ? $e($h['diagnosis']) : 'Chưa có chẩn đoán (' . $e($h['status']) . ')' ?></strong></p>
-                                            <p><small><?= !empty($h['doctor_notes']) ? $e($h['doctor_notes']) : (!empty($h['symptoms_note']) ? $e($h['symptoms_note']) : 'Không có ghi chú triệu chứng.') ?></small></p>
+                                            <p><strong>Diagnosis: <?= !empty($h['diagnosis']) ? $e($h['diagnosis']) : 'No diagnosis yet (' . $e($h['status']) . ')' ?></strong></p>
+                                            <p><small><?= !empty($h['doctor_notes']) ? $e($h['doctor_notes']) : (!empty($h['symptoms_note']) ? $e($h['symptoms_note']) : 'No symptoms noted.') ?></small></p>
                                             <?php if (!empty($h['treatment_plan'])): ?>
                                                 <table width="100%" border="1" cellpadding="5" cellspacing="0">
                                                     <tr>
@@ -228,7 +222,7 @@ $isNewVisit = empty($otherVisits);
                                 <br>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <p style="color:#666;">Bệnh nhân chưa có lịch sử khám trước đây.</p>
+                            <p style="color:#666;">The patient has no prior medical history.</p>
                         <?php endif; ?>
                     </div>
                 </td>
@@ -251,7 +245,7 @@ $isNewVisit = empty($otherVisits);
                             </p>
                             <p>
                                 <label for="diagnosis"><small><strong>CONFIRMED DIAGNOSIS</strong></small></label><br>
-                                <input type="text" id="diagnosis" name="diagnosis" size="38" value="<?= $e($formDiagnosis) ?>" placeholder="Nhập chẩn đoán..." required>
+                                <input type="text" id="diagnosis" name="diagnosis" size="38" value="<?= $e($formDiagnosis) ?>" placeholder="Enter diagnosis..." required>
                             </p>
                         </div>
                         <br>
@@ -271,7 +265,7 @@ $isNewVisit = empty($otherVisits);
                         <br>
 
                         <div align="center">
-                            <button type="submit" onclick="return confirm('Hoàn tất buổi khám và lưu hồ sơ?');">
+                            <button type="submit" onclick="return confirm('The examination has been completed and the record has been saved');">
                                 <h3>✔️ Complete Consultation & Save Record</h3>
                             </button>
                         </div>
@@ -295,11 +289,11 @@ $isNewVisit = empty($otherVisits);
                 <table width="100%" border="1" cellpadding="8" cellspacing="0">
                     <tr><td>
                         <table width="100%" border="0"><tr>
-                            <td><input type="text" name="med_name[]" size="28" placeholder="Tên thuốc, liều lượng"></td>
+                            <td><input type="text" name="med_name[]" size="28" placeholder="Drug name, dosage"></td>
                             <td align="right"><button type="button" onclick="this.closest('div').remove()">✕</button></td>
                         </tr></table>
                         <br>
-                        <input type="text" name="med_note[]" size="34" placeholder="Hướng dẫn sử dụng">
+                        <input type="text" name="med_note[]" size="34" placeholder="User manual">
                     </td></tr>
                 </table><br>`;
             wrap.appendChild(box);
