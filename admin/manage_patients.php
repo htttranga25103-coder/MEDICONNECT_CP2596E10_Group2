@@ -152,6 +152,8 @@ $endItem   = min($offset + $limit,$totalPatients);
             <a href="../doctors/admin.php">Manage Doctors &#9662;</a>
             <ul class="admin-quick-dropdown-menu">
                 <li><a href="../doctors/admin.php">Doctors &amp; Approval</a></li>
+                <li><a href="../doctors/index.php">Doctors List (Public)</a></li>
+                <li><a href="../doctors/register.php">Doctor Register</a></li>
                 <li><a href="../reviews/index.php">Reviews Doctor</a></li>
             </ul>
         </li>
