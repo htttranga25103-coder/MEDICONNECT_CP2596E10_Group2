@@ -35,11 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $flashType = 'error';
     }
 }
+
 $doctorInfo = DoctorDashboard::getDoctorInfo($doctor_id);
 $allAppointments = DoctorDashboard::getDoctorAppointments($doctor_id) ?: [];
 $appointments = array_values(array_filter($allAppointments, function ($a) {
     return strtoupper(trim((string)($a['status'] ?? ''))) !== 'CANCELLED';
 }));
+
 $pendingAppointments = [];
 foreach ($appointments as $item) {
     if (strtoupper(trim((string)($item['status'] ?? ''))) === 'PENDING') {
@@ -52,306 +54,69 @@ foreach ($appointments as $item) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediConnect - Doctor Dashboard</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f4f6f8;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #fff;
-            min-height: 100vh;
-            padding: 0 40px 50px 40px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 0;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 30px;
-            gap: 16px;
-        }
-
-        .doc-nav {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            list-style: none;
-        }
-        .doc-nav a {
-            text-decoration: none;
-            color: #334155;
-            font-weight: 600;
-            font-size: 14px;
-            padding: 7px 12px;
-            border-radius: 6px;
-            white-space: nowrap;
-        }
-        .doc-nav a:hover, .doc-nav a.active {
-            background-color: #198754;
-            color: #fff;
-        }
-
-        .flash-box {
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-bottom: 24px;
-            font-weight: bold;
-        }
-        .flash-success {
-            background-color: #e8f5e9;
-            color: #146c43;
-            border: 1px solid #badbcc;
-        }
-        .flash-error {
-            background-color: #f8d7da;
-            color: #842029;
-            border: 1px solid #f5c2c7;
-        }
-        .welcome-banner {
-            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
-            border-radius: 16px;
-            padding: 32px 40px;
-            color: white;
-            margin-bottom: 36px;
-            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
-        }
-        .greeting {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-            opacity: 0.9;
-            margin-bottom: 8px;
-        }
-        .welcome-banner h2 {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-        .welcome-banner .title {
-            display: inline-block;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .welcome-banner .description {
-            font-size: 15px;
-            opacity: 0.95;
-        }
-        .appointments-header {
-            background-color: transparent;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 24px;
-        }
-        .appointments-header h2 {
-            font-size: 26px;
-            color: #111;
-            margin-bottom: 6px;
-        }
-        .appointments-header p {
-            color: #666;
-            font-size: 15px;
-        }
-        .appointments-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-        .appointment-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 14px;
-            padding: 28px 32px;
-            background-color: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-        .patient-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .patient-name {
-            font-weight: bold;
-            font-size: 22px;
-            color: #111;
-        }
-        .btn-start {
-            font-size: 14px;
-            font-weight: bold;
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .btn-start:hover {
-            background-color: #0b5ed7;
-        }
-        .btn-chat-link {
-            font-size: 14px;
-            font-weight: bold;
-            background-color: #198754;
-            color: white;
-            border-radius: 8px;
-            padding: 10px 14px;
-            text-decoration: none;
-        }
-        .phone-info {
-            font-size: 16px;
-            color: #555;
-        }
-        .appointment-time {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #e8f5e9;
-            color: #198754;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        .appointment-time .time-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-        }
-        .btn-cancel {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 8px;
-            background-color: #dc3545;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-cancel:hover {
-            background-color: #bb2d3b;
-        }
-        .pending-request-box {
-            border: 1px solid #dcdcdc;
-            border-radius: 12px;
-            padding: 18px 22px;
-            margin-bottom: 24px;
-            background-color: #fff;
-        }
-        .pending-request-box legend {
-            padding: 0 10px;
-            color: #198754;
-        }
-        .btn-decline {
-            background-color: #6c757d;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 18px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-approve {
-            background-color: #198754;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 22px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        footer {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #666;
-        }
-        .logo-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-    </style>
+    <title>Doctor Portal - MediConnect</title>
+    <link rel="stylesheet" href="../assets/css/patient_booking.css?v=2">
+    <link rel="stylesheet" href="../assets/css/article_style.css?v=2">
+    <link rel="stylesheet" href="../assets/css/home_style.css?v=5">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo-container">
-                <a href="../index.php"><img src="../images/icons/mediconnect.png" alt="MediConnect Logo"></a>
+    <!-- Thanh điều hướng đồng bộ với index.php -->
+    <nav class="patient-navbar">
+        <div class="navbar-container">
+            <a href="../index.php" class="brand-logo">MediConnect</a>
 
-                <ul class="doc-nav">
-                    <li><a href="../index.php">Home</a></li>
-                    <li><a href="doctor_dashboard.php" class="active">Doctor Portal</a></li>
-                    <li><a href="../chat.php">Consultation Chat</a></li>
-                    <li><a href="../articles/news.php">Articles</a></li>
-                    <li><a href="../reviews/index.php">Reviews</a></li>
-                </ul>
+            <ul class="nav-links">
+                <li><a href="../index.php">Home</a></li>
+                <li><a href="doctor_dashboard.php" class="active">Doctor Portal</a></li>
+                <li><a href="../chat.php">Consultation Chat</a></li>
+                <li><a href="../articles/news.php">Articles</a></li>
+                <li><a href="../reviews/index.php">Reviews</a></li>
+            </ul>
 
-                <a href="../auth/logout.php" onclick="return confirm('Are you sure you want to log out?');"
-                   style="display:inline-flex; align-items:center; justify-content:center; color: white; background-color: #198754; padding: 8px 18px; text-decoration:none; border-radius: 6px; font-weight:bold; font-size:14px;">
-                   Logout
-                </a>
+            <div class="nav-user">
+                <div class="user-dropdown">
+                    <a href="../auth/profile.php" class="user-trigger">
+                        <span>Hello, <strong><?= htmlspecialchars($doctorInfo['full_name'] ?? ($_SESSION['full_name'] ?? 'Doctor')) ?></strong> &#9662;</span>
+                    </a>
+                    <ul class="user-dropdown-menu">
+                        <li><a href="../auth/profile.php">My Profile</a></li>
+                    </ul>
+                </div>
+                <a href="../auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
             </div>
-        </header>
-        
-        <main>
-            <?php if ($flashMessage !== ''): ?>
-                <div class="flash-box <?= $flashType === 'success' ? 'flash-success' : 'flash-error' ?>">
-                    <?= htmlspecialchars($flashMessage) ?>
-                </div>
-            <?php endif; ?>
+        </div>
+    </nav>
 
-            <!-- Welcome Banner Section -->
-            <section class="welcome-banner">
-                <div class="greeting">
-                    <span>Welcome back</span>
-                </div>
-                <h2><?= htmlspecialchars($doctorInfo['full_name'] ?? ($_SESSION['full_name'] ?? 'Doctor')) ?></h2>
-                <p class="title"><?= htmlspecialchars($doctorInfo['specialty_name'] ?? 'Specialist') ?></p>
-                <p class="description">Your workspace is ready to manage patients.</p>
-            </section>
+    <!-- Banner chào mừng dùng class .home-hero của home_style.css -->
+    <section class="home-hero">
+        <div class="home-hero-inner">
+            <div class="home-hero-text">
+                <p style="margin-bottom: 6px; font-weight: 600;">Welcome back</p>
+                <h1><?= htmlspecialchars($doctorInfo['full_name'] ?? ($_SESSION['full_name'] ?? 'Doctor')) ?></h1>
+                <span class="specialty-pill"><?= htmlspecialchars($doctorInfo['specialty_name'] ?? 'Specialist') ?></span>
+                <p style="margin-bottom: 0;">Your workspace is ready to manage patients and appointment requests.</p>
+            </div>
+        </div>
+    </section>
 
-            <!-- Main Title Section -->
-            <section class="appointments-header">
-                <h2>Appointments &amp; intake (<?= count($appointments) ?>)</h2>
-                <p>Approve or decline patient appointment requests, or start medical examination.</p>
-            </section>
-           
-            <div class="appointments-grid">
-                <?php if (!empty($appointments)): ?>
+    <main class="main-wrapper">
+        <?php if ($flashMessage !== ''): ?>
+            <div class="flash-box <?= $flashType === 'success' ? 'flash-success' : 'flash-error' ?>">
+                <?= htmlspecialchars($flashMessage) ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- DANH SÁCH LỊCH HẸN -->
+        <section class="home-section">
+            <div class="section-bar">
+                <div>
+                    <h2>Appointments &amp; intake (<?= count($appointments) ?>)</h2>
+                    <p class="section-subtitle">Approve or decline patient appointment requests, or start medical examination.</p>
+                </div>
+            </div>
+
+            <?php if (!empty($appointments)): ?>
+                <div class="appointments-grid">
                     <?php foreach ($appointments as $app): ?>
                         <?php
                         $formattedTime = !empty($app['booking_time'])
@@ -371,6 +136,7 @@ foreach ($appointments as $item) {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="phone-info">
                                 <span>Phone: </span>
                                 <strong><?= htmlspecialchars($app['patient_phone'] ?? 'Not yet updated') ?></strong>
@@ -378,42 +144,37 @@ foreach ($appointments as $item) {
 
                             <div class="appointment-time">
                                 <div class="time-label">
-                                    <span class="icon">🕒</span>
-                                    <span class="label">Appointment (<?= htmlspecialchars($app['status'] ?? 'PENDING') ?>)</span>
+                                    <span>🕒 Appointment (<?= htmlspecialchars($app['status'] ?? 'PENDING') ?>)</span>
                                 </div>
                                 <p class="date-time"><strong><?= $formattedTime ?></strong></p>
-                            </div>                         
+                            </div>
 
                             <?php if (in_array(strtoupper((string)$app['status']), ['PENDING', 'CONFIRMED'], true)): ?>
                                 <form method="POST" style="margin-top: auto;" onsubmit="return confirm('Bạn có chắc muốn hủy lịch hẹn này?');">
                                     <input type="hidden" name="action" value="update_status">
                                     <input type="hidden" name="appointment_id" value="<?= (int)$app['appointment_id'] ?>">
                                     <input type="hidden" name="status" value="CANCELLED">
-                                    <button type="submit" class="btn-cancel">
-                                        Cancel appointment
-                                    </button>
+                                    <button type="submit" class="btn-cancel">Cancel appointment</button>
                                 </form>
                             <?php endif; ?>
                         </article>
                     <?php endforeach; ?>
-                <?php else: ?>
-                    <p style="color: #666; padding: 20px 0;">Hiện tại bác sĩ chưa có lịch hẹn nào.</p>
-                <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <div class="article-card article-card-empty">
+                    Hiện tại bác sĩ chưa có lịch hẹn nào.
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- YÊU CẦU ĐẶT LỊCH CHỜ DUYỆT -->
+        <section class="home-section">
+            <div class="section-bar">
+                <div>
+                    <h2>Pending Appointment Requests (<?= count($pendingAppointments) ?>)</h2>
+                    <p class="section-subtitle">Review patient details and symptoms from database to approve or decline scheduled bookings.</p>
+                </div>
             </div>
-
-            <!-- PENDING APPOINTMENT REQUESTS-->
-            <section>
-                <table width="100%" border="1" cellpadding="12" cellspacing="0">
-                    <tr>
-                        <td style="background-color:white">
-                            <h2>Pending Appointment Requests (<?= count($pendingAppointments) ?>)</h2>
-                            <p>Review patient details and symptoms from database to approve or decline scheduled bookings.</p>
-                        </td>
-                    </tr>
-                </table>
-            </section>
-
-            <br>
 
             <?php if (!empty($pendingAppointments)): ?>
                 <?php foreach ($pendingAppointments as $req): ?>
@@ -424,84 +185,66 @@ foreach ($appointments as $item) {
                         : 'Chưa xác định';
                     $genderVal = trim((string)($req['gender'] ?? ''));
                     ?>
-                    <fieldset class="pending-request-box">
-                        <legend>
-                            <h3>Request #<?= $reqId ?> — Scheduled Time: <?= htmlspecialchars($scheduledTime) ?></h3>
-                        </legend>
+                    <div class="pending-request-card">
+                        <div class="pending-request-header">
+                            <h3>Request #<?= $reqId ?> &mdash; Scheduled Time: <?= htmlspecialchars($scheduledTime) ?></h3>
+                            <span class="article-category-tag">PENDING</span>
+                        </div>
 
-                        <table width="100%" border="0" cellpadding="8" cellspacing="0">
-                            <tr valign="top">
-                                <!-- LEFT: PATIENT PERSONAL INFO -->
-                                <td width="45%">
-                                    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-                                        <tr>
-                                            <td style="background-color:white">
-                                                <h4>👤 Patient Information</h4>
-                                                <br>
-                                                <p style="margin-bottom: 6px;"><strong>Full Name:</strong> <?= htmlspecialchars($req['patient_name'] ?? 'Chưa cập nhật') ?></p>
-                                                <p style="margin-bottom: 6px;"><strong>Phone Number:</strong> <?= htmlspecialchars($req['patient_phone'] ?? 'Chưa cập nhật') ?></p>
-                                                <p style="margin-bottom: 6px;"><strong>Email:</strong> <?= htmlspecialchars($req['patient_email'] ?? 'Chưa cập nhật') ?></p>
-                                                <p style="margin-bottom: 6px;"><strong>Date of Birth:</strong> <?= htmlspecialchars($req['date_of_birth'] ?? 'Chưa cập nhật') ?></p>
-                                                <p style="margin-bottom: 6px;">
-                                                    <strong>Gender:</strong>
-                                                    <?= $genderVal !== '' ? htmlspecialchars($genderVal) : 'Not yet updated' ?>
-                                                </p>
-                                                <p><strong>Address:</strong> <?= htmlspecialchars($req['address'] ?? 'Chưa cập nhật') ?></p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
+                        <div class="pending-grid">
+                            <div class="pending-col">
+                                <h4>👤 Patient Information</h4>
+                                <p><strong>Full Name:</strong> <?= htmlspecialchars($req['patient_name'] ?? 'Chưa cập nhật') ?></p>
+                                <p><strong>Phone Number:</strong> <?= htmlspecialchars($req['patient_phone'] ?? 'Chưa cập nhật') ?></p>
+                                <p><strong>Email:</strong> <?= htmlspecialchars($req['patient_email'] ?? 'Chưa cập nhật') ?></p>
+                                <p><strong>Date of Birth:</strong> <?= htmlspecialchars($req['date_of_birth'] ?? 'Chưa cập nhật') ?></p>
+                                <p><strong>Gender:</strong> <?= $genderVal !== '' ? htmlspecialchars($genderVal) : 'Not yet updated' ?></p>
+                                <p><strong>Address:</strong> <?= htmlspecialchars($req['address'] ?? 'Chưa cập nhật') ?></p>
+                            </div>
 
-                                <!-- RIGHT: SYMPTOMS & BOOKING DETAILS -->
-                                <td width="55%">
-                                    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-                                        <tr>
-                                            <td style="background-color:white">
-                                                <h4>🩺 Symptoms &amp; Booking Details</h4>
-                                                <p style="margin-bottom: 6px;"><strong>Schedule ID:</strong> #<?= htmlspecialchars((string)($req['schedule_id'] ?? 'N/A')) ?></p>
-                                                <?php if (!empty($req['symptoms_note'])): ?>
-                                                    <p style="margin-bottom: 6px;"><strong>Symptoms Note:</strong> <?= htmlspecialchars($req['symptoms_note']) ?></p>
-                                                <?php endif; ?>
-                                                <p><strong>Status:</strong> <span style="color:#d97706; font-weight:bold;"><?= htmlspecialchars($req['status'] ?? 'PENDING') ?></span></p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
+                            <div class="pending-col">
+                                <h4>🩺 Symptoms &amp; Booking Details</h4>
+                                <p><strong>Schedule ID:</strong> #<?= htmlspecialchars((string)($req['schedule_id'] ?? 'N/A')) ?></p>
+                                <?php if (!empty($req['symptoms_note'])): ?>
+                                    <p><strong>Symptoms Note:</strong> <?= htmlspecialchars($req['symptoms_note']) ?></p>
+                                <?php endif; ?>
+                                <p><strong>Status:</strong> <span style="color:#d97706; font-weight:bold;"><?= htmlspecialchars($req['status'] ?? 'PENDING') ?></span></p>
+                            </div>
+                        </div>
 
-                        <hr style="margin: 14px 0;">
-
-                        <!-- ACTION BUTTONS -->
-                        <div align="right">
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Decline an appointment #<?= $reqId ?>?');">
+                        <div class="pending-actions">
+                            <form method="POST" onsubmit="return confirm('Decline an appointment #<?= $reqId ?>?');">
                                 <input type="hidden" name="action" value="update_status">
                                 <input type="hidden" name="appointment_id" value="<?= $reqId ?>">
                                 <input type="hidden" name="status" value="CANCELLED">
                                 <button type="submit" class="btn-decline">Decline</button>
                             </form>
-                            &nbsp;&nbsp;
-                            <form method="POST" style="display:inline;">
+                            <form method="POST">
                                 <input type="hidden" name="action" value="update_status">
                                 <input type="hidden" name="appointment_id" value="<?= $reqId ?>">
                                 <input type="hidden" name="status" value="CONFIRMED">
                                 <button type="submit" class="btn-approve">Approve Appointment</button>
                             </form>
                         </div>
-                    </fieldset>
+                    </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p style="color: #666; padding: 16px 0;">There are currently no appointment requests awaiting approval (PENDING).</p>
+                <div class="article-card article-card-empty">
+                    There are currently no appointment requests awaiting approval (PENDING).
+                </div>
             <?php endif; ?>
-        </main>
+        </section>
+    </main>
 
-        <footer>
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>&copy; 2026 MediConnect. Clinic management &amp; appointment booking. All rights reserved.</span>
             <div>
-                <strong>MediConnect</strong>
-                <p>Clinic management &amp; appointment booking</p>
+                <a href="../index.php">Home</a>
+                <a href="../articles/news.php">Medical News</a>
+                <a href="../articles/manage.php">Author Portal</a>
             </div>
-            <small>© 2026 Mediconnect. All rights reserved.</small>
-        </footer>
-    </div>
+        </div>
+    </footer>
 </body>
 </html>
