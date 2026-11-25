@@ -1,9 +1,19 @@
+<?php
+session_start();
+require_once __DIR__ . '/../models/homeclass.php';
+
+$roleName = strtoupper($_SESSION['role_name'] ?? '');
+$isLoggedIn = isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] > 0;
+
+$doctors = Doctor::getFeaturedDoctors();
+$articles = Doctor::getLatestArticles();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediConnect - Desktop</title>
+    <title>MediConnect - Home</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,7 +27,6 @@
             color: #333;
         }
 
-        /* Khung bao toàn trang chuẩn Desktop */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -35,6 +44,8 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn-green:hover {
             background-color: #157347;
@@ -48,6 +59,9 @@
             padding: 11px 22px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
         }
 
         header {
@@ -56,16 +70,20 @@
             align-items: center;
             padding: 20px 0;
             border-bottom: 1px solid #eee;
+            gap: 12px;
+            flex-wrap: wrap;
         }
         .logo-btn {
             background: none;
             border: none;
             cursor: pointer;
+            text-decoration: none;
         }
         .nav-buttons {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .hero {
@@ -196,7 +214,6 @@
             font-size: 18px;
         }
 
-        /* Thanh cuộn ngang cho Health Insights */
         .article-grid::-webkit-scrollbar {
             height: 8px;
         }
@@ -224,13 +241,26 @@
     <div class="container">
         <!-- HEADER -->
         <header>
-            <button class="logo-btn">
+            <a href="../index.php" class="logo-btn">
                 <img src="../images/icons/mediconnect.png" alt="mediconnect image">
-            </button>
+            </a>
             <div class="nav-buttons">
-                <button class="btn-outline">Login</button>
-                <button class="btn-green">Register as patient</button>
-                <button class="btn-green">Register as doctor</button>
+                <a href="../index.php" class="btn-outline">Main Portal</a>
+                <a href="../articles/news.php" class="btn-outline">Articles</a>
+                <?php if ($isLoggedIn): ?>
+                    <?php if ($roleName === 'ADMIN'): ?>
+                        <a href="admin_dashboard.php" class="btn-green">Admin Dashboard</a>
+                    <?php elseif ($roleName === 'DOCTOR'): ?>
+                        <a href="doctor_dashboard.php" class="btn-green">Doctor Workspace</a>
+                    <?php elseif ($roleName === 'PATIENT'): ?>
+                        <a href="../patient/book_appointment.php" class="btn-green">Book Appointment</a>
+                    <?php endif; ?>
+                    <a href="../auth/logout.php" class="btn-outline" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
+                <?php else: ?>
+                    <a href="../auth/login.php" class="btn-outline">Login</a>
+                    <a href="../auth/register.php" class="btn-green">Register as patient</a>
+                    <a href="../doctors/register.php" class="btn-green">Register as doctor</a>
+                <?php endif; ?>
             </div>
         </header>
         
@@ -238,17 +268,14 @@
             <div class="hero-text">
                 <h1>Easy booking. Care that puts you first.</h1>
                 <p>Connect with experienced specialists. Book on your terms, skip the wait, and access safe online care.</p>
-                <button class="btn-green" style="padding: 15px 40px; font-size: 16px;">Book an appointment</button>
+                <a href="<?= ($isLoggedIn && $roleName === 'PATIENT') ? '../patient/book_appointment.php' : '../auth/login.php' ?>"
+                   class="btn-green" style="padding: 15px 40px; font-size: 16px;">Book an appointment</a>
             </div>
             <div class="hero-image">
                 <img src="../images/picture.png" alt="Medical care">
             </div>
         </section>
 
-        <?php
-        require_once '../models/homeclass.php';        
-        $doctors = Doctor::getFeaturedDoctors(); 
-        ?>
         <!-- FEATURED DOCTORS -->
         <section class="featured-doctors">
             <div class="section-header">
@@ -256,17 +283,23 @@
                     <h2>Featured doctors</h2>
                     <p>Leading specialists with verified credentials</p>
                 </div>
+                <a href="../doctors/index.php" class="btn-outline">View all doctors →</a>
             </div>
 
             <div class="doctor-grid" id="doctor-grid">
                 <?php if (!empty($doctors)): ?>
                     <?php foreach ($doctors as $doc): ?>
+                        <?php
+                        $bookUrl = ($isLoggedIn && $roleName === 'PATIENT')
+                            ? '../patient/book_appointment.php?doctor_id=' . (int)$doc['doctor_id'] . '#booking-section'
+                            : '../auth/login.php';
+                        ?>
                         <div class="card doctor-item">
-                            <img src="<?= !empty($doc['avatar_url']) ? '../assets/images/'.htmlspecialchars($doc['avatar_url']) : '../assets/images/default_avatar.png' ?>" 
+                            <img src="<?= !empty($doc['avatar_url']) ? '../assets/images/' . htmlspecialchars($doc['avatar_url']) : '../assets/images/default_avatar.png' ?>" 
                                  alt="<?= htmlspecialchars($doc['full_name']) ?>">
                             <h3><?= htmlspecialchars($doc['full_name']) ?></h3>
                             <p><?= htmlspecialchars($doc['bio'] ?? '') ?> / <?= htmlspecialchars($doc['specialty_name'] ?? '') ?></p>
-                            <button class="btn-green" onclick="location.href='booking.php?doctor_id=<?= $doc['doctor_id'] ?>'">
+                            <button class="btn-green" onclick="location.href='<?= $bookUrl ?>'">
                                 Book now
                             </button>
                         </div>
@@ -278,16 +311,13 @@
         </section>
 
         <!-- HEALTH INSIGHTS -->
-        <?php
-        $articles = Doctor::getLatestArticles();
-        ?>
-
         <section class="health-insights">
             <div class="section-header">
                 <div>
                     <h2>Health insights</h2>
                     <span>Latest medical news and health tips</span>
                 </div>
+                <a href="../articles/news.php" class="btn-outline">All articles →</a>
             </div>
 
             <div class="article-grid" id="article-grid">
@@ -298,11 +328,14 @@
                         if (!empty($art['thumbnail_url'])) {
                             $thumb = str_starts_with($art['thumbnail_url'], 'http') 
                                 ? $art['thumbnail_url'] 
-                                : '../images/' . $art['thumbnail_url'];
+                                : '../' . ltrim($art['thumbnail_url'], '/');
                         }
+                        $articleUrl = !empty($art['article_id'])
+                            ? '../articles/detail.php?id=' . (int)$art['article_id']
+                            : '../articles/news.php';
                         ?>
                         <article class="article-item" 
-                                 onclick="location.href='article-detail.php?slug=<?= urlencode($art['slug']) ?>'">
+                                 onclick="location.href='<?= $articleUrl ?>'">
                             <img src="<?= htmlspecialchars($thumb) ?>" alt="<?= htmlspecialchars($art['title']) ?>">
                             <div class="article-body">
                                 <h3><?= htmlspecialchars($art['title']) ?></h3>
@@ -320,7 +353,7 @@
         <footer>
             <div>
                 <strong>MediConnect</strong>
-                <p>Clinic management & appointment booking</p>
+                <p>Clinic management &amp; appointment booking</p>
             </div>
             <small>© 2026 Mediconnect. All rights reserved.</small>
         </footer>

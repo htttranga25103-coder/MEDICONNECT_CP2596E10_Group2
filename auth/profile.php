@@ -3,23 +3,25 @@ session_start();
 require_once '../config/database.php';
 require_once '../includes/csrf.php';
 
-function e($value): string{
+function e($value): string {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
-function isValidAvatar(string $avatar): bool{
-    return strlen($avatar) <= 255 &&(
+
+function isValidAvatar(string $avatar): bool {
+    return strlen($avatar) <= 255 && (
         preg_match('#^https://[^\s]+$#i', $avatar) === 1 ||
-        preg_match('/^[\w\-]+\.(png|jpe?g|gif|webp)$/i', $avatar)===1
-);
+        preg_match('/^[\w\-]+\.(png|jpe?g|gif|webp)$/i', $avatar) === 1
+    );
 }
 
-if(!isset($_SESSION['user_id'])){
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-$userId = $_SESSION['user_id'];
+$userId = (int)$_SESSION['user_id'];
 $message = "";
+
 function loadUserInfo(PDO $pdo, int $userId) {
     $stmt = $pdo->prepare("
         SELECT u.user_id, u.email, u.full_name, u.phone_number, u.avatar_url,
@@ -48,18 +50,18 @@ if (!$userInfo) {
     exit();
 }
 
-$hasPatient  = $userInfo['patient_id'] !== null;   // chỉ bệnh nhân mới có địa chỉ
+$hasPatient  = $userInfo['patient_id'] !== null; // chỉ bệnh nhân mới có địa chỉ
 $message     = '';
 $messageType = '';
 
-// Thông báo lưu 
+// Thông báo lưu
 if (isset($_SESSION['profile_flash'])) {
     $messageType = $_SESSION['profile_flash']['type'];
     $message     = $_SESSION['profile_flash']['text'];
     unset($_SESSION['profile_flash']);
 }
 
-// check ton tai trong database
+// Dữ liệu hiện tại trong database
 $form = [
     'full_name'    => $userInfo['full_name'],
     'phone_number' => $userInfo['phone_number'] ?? '',
@@ -77,9 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
     $phoneClean = preg_replace('/[\s.\-]/', '', $form['phone_number']);
     $error = '';
-    if(!csrfValid()) {
-        $error=CSRF_ERROR_MESSAGE;
-    }elseif($form['full_name'] === '' || mb_strlen($form['full_name']) > 100) {
+    if (!csrfValid()) {
+        $error = CSRF_ERROR_MESSAGE;
+    } elseif ($form['full_name'] === '' || mb_strlen($form['full_name']) > 100) {
         $error = "Please enter your full name (up to 100 characters).";
     } elseif ($phoneClean !== '' && !preg_match('/^\+?[0-9]{9,15}$/', $phoneClean)) {
         $error = "Phone number is incorrect (9-15 digits).";
@@ -102,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             }
             $pdo->commit();
 
-            $_SESSION['full_name'] = $form['full_name'];   // để lời chào hiện đúng tên mới
+            $_SESSION['full_name'] = $form['full_name'];
             $_SESSION['profile_flash'] = ['type' => 'success', 'text' => "Profile updated successfully!"];
             header("Location: profile.php");
             exit();
@@ -118,25 +120,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $messageType = 'error';
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $oldPass     = $_POST['old_password'] ?? '';
     $newPass     = $_POST['new_password'] ?? '';
     $confirmPass = $_POST['confirm_password'] ?? '';
     $error = '';
-    if(!csrfValid()){
-        $error=CSRF_ERROR_MESSAGE;
-    }else{
-    try {
-        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
-        $stmt->execute([$userId]);
-        $row = $stmt->fetch();
-    } catch (\PDOException $e) {
-        error_log("Password load error: " . $e->getMessage());
-        $row = false;
-        $error = "Could not change your password. Please try again later.";
+    if (!csrfValid()) {
+        $error = CSRF_ERROR_MESSAGE;
+    } else {
+        try {
+            $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $row = $stmt->fetch();
+        } catch (\PDOException $e) {
+            error_log("Password load error: " . $e->getMessage());
+            $row = false;
+            $error = "Could not change your password. Please try again later.";
+        }
     }
-    }
+
     if ($error === '') {
         if (!$row || !password_verify($oldPass, $row['password_hash'])) {
             $error = "Current password is incorrect.";
@@ -158,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
             $stmt->execute([password_hash($newPass, PASSWORD_DEFAULT), $userId]);
 
-            session_regenerate_id(true);   // đổi mã phiên sau khi đổi mật khẩu
+            session_regenerate_id(true);
             $_SESSION['profile_flash'] = ['type' => 'success', 'text' => "Password changed successfully!"];
             header("Location: profile.php");
             exit();
@@ -170,9 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $message     = $error;
     $messageType = 'error';
 }
+
 $showAvatarImg = preg_match('#^https://#i', (string)$userInfo['avatar_url']) === 1;
 $initial = mb_strtoupper(mb_substr($userInfo['full_name'], 0, 1));
-$isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); // Thêm dòng này
+$role = strtoupper($userInfo['role_name'] ?? '');
+$isStaff = in_array($role, ['ADMIN', 'DOCTOR'], true);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -190,6 +194,15 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
             <a href="../index.php" class="sidebar-brand">MediConnect</a>
             <ul class="sidebar-menu">
                 <li><a href="../index.php">Home</a></li>
+                <?php if ($role === 'ADMIN'): ?>
+                    <li><a href="../views/admin_dashboard.php">Dashboard Overview</a></li>
+                    <li><a href="../admin/manage_patients.php">Manage Patients</a></li>
+                    <li><a href="../doctors/admin.php">Manage Doctors</a></li>
+                    <li><a href="../locations/index.php">Manage Locations</a></li>
+                <?php elseif ($role === 'DOCTOR'): ?>
+                    <li><a href="../views/doctor_dashboard.php">Doctor Portal</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                <?php endif; ?>
                 <li><a href="../articles/news.php">Public News</a></li>
                 <li><a href="../articles/manage.php">Manage Articles</a></li>
                 <li><a href="profile.php" class="active">My Profile</a></li>
@@ -200,43 +213,37 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
             <header class="topbar">
                 <div class="topbar-user">
                     <span>Welcome, <strong><?php echo e($userInfo['full_name']); ?></strong> (<?php echo e($userInfo['role_name']); ?>)</span>
-                    <a href="logout.php" class="btn-logout">Log out</a>
+                    <a href="logout.php" class="btn-logout" onclick="return confirm('Are you sure you want to log out?');">Log out</a>
                 </div>
             </header>
             <main class="content-container">
 <?php else: ?>
-    <?php $role = $_SESSION['role_name'] ?? ''; ?>
-                <nav class="patient-navbar">
-                        <div class="navbar-container">
-                            <a href="../index.php" class="brand-logo">MediConnect</a>
+    <nav class="patient-navbar">
+        <div class="navbar-container">
+            <a href="../index.php" class="brand-logo">MediConnect</a>
 
-                            <ul class="nav-links">
-                                <li><a href="../index.php">Home / News</a></li>
+            <ul class="nav-links">
+                <li><a href="../index.php">Home</a></li>
 
-                                <?php if ($role === 'PATIENT'): ?>
-                                    <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
-                                    <li><a href="../patient/my_appointments.php">My Appointments</a></li>
-                                    <li><a href="../chat.php">Consultation Chat</a></li>
-                                <?php elseif ($role === 'DOCTOR'): ?>
-                                    <li><a href="../doctor/dashboard.php">Doctor Dashboard</a></li>
-                                    <li><a href="../chat.php">Patient Chat</a></li>
-                                    <li><a href="../articles/manage.php">Manage Articles</a></li>
-                                <?php elseif ($role === 'ADMIN'): ?>
-                                    <li><a href="../admin/manage_patients.php">Admin Panel</a></li>
-                                    <li><a href="../articles/manage.php">Manage Articles</a></li>
-                                <?php endif; ?>
+                <?php if ($role === 'PATIENT'): ?>
+                    <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
+                    <li><a href="../patient/my_appointments.php">My Appointments</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                    <li><a href="../articles/news.php">Articles</a></li>
+                    <li><a href="../reviews/index.php">Reviews</a></li>
+                <?php endif; ?>
 
-                                <li><a href="profile.php" class="active">My Profile</a></li>
-                            </ul>
+                <li><a href="profile.php" class="active">My Profile</a></li>
+            </ul>
 
-                            <div class="nav-user">
-                                <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong></span>
-                                <a href="../auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">
-                                    Logout
-                                </a>
-                            </div>
-                        </div>
-                    </nav>
+            <div class="nav-user">
+                <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong></span>
+                <a href="logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
     <main class="article-container" style="max-width: 780px;">
 <?php endif; ?>
 
@@ -248,6 +255,7 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
                 <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
             </div>
         <?php endif; ?>
+
         <div class="panel-card">
             <div class="panel-header">
                 <div style="display: flex; align-items: center; gap: 14px;">
@@ -303,6 +311,7 @@ $isStaff = in_array($userInfo['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true); //
                 </div>
             </form>
         </div>
+
         <div class="panel-card">
             <div class="panel-header">
                 <h2 class="panel-title">Change Password</h2>

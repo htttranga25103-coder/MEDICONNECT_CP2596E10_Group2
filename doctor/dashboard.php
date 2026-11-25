@@ -1,10 +1,6 @@
 <?php
-session_start();
-require_once __DIR__ . '/../config/MyConnection.php';
-if (!isset($_SESSION['user_id']) || strtoupper($_SESSION['role_name'] ?? '') !== 'DOCTOR') {
-    header("Location: ../auth/login.php");
-    exit();
-}
+header("Location: ../views/doctor_dashboard.php");
+exit();
 
 $conn = MyConnection::connectDatabase();
 $user_id = (int)$_SESSION['user_id'];

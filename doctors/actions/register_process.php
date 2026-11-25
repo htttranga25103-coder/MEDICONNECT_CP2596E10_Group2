@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -96,8 +95,6 @@ $streetInput = trim($_POST['street_id'] ?? '');
 
 $agreeTerms = $_POST['terms_agree'] ?? '';
 
-// Old values are restored after an error.
-// Passwords are never stored in session.
 $old = [
     'full_name' => $full_name,
     'email' => $email,
@@ -208,10 +205,7 @@ if ($phoneLength === false || $phoneLength > 20) {
 }
 
 // Specialization ID.
-$specialization_id = filter_var(
-    $specializationInput,
-    FILTER_VALIDATE_INT
-);
+$specialization_id = filter_var($specializationInput, FILTER_VALIDATE_INT);
 
 if ($specialization_id === false || $specialization_id <= 0) {
     redirectWithMessage(
@@ -236,10 +230,7 @@ if ($degreeLength === false || $degreeLength > 150) {
 if ($experienceInput === '') {
     $experience_years = 0;
 } else {
-    $experience_years = filter_var(
-        $experienceInput,
-        FILTER_VALIDATE_INT
-    );
+    $experience_years = filter_var($experienceInput, FILTER_VALIDATE_INT);
 }
 
 if (
@@ -294,6 +285,56 @@ if (
     );
 }
 
+// Handle doctor avatar upload (optional).
+$avatarUrl = 'default_avatar.png';
+if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+    if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        redirectWithMessage('Error uploading profile photo. Please try again.', 'error', $old);
+    }
+
+    $maxSize = 2 * 1024 * 1024; // 2MB
+    if ($_FILES['avatar']['size'] > $maxSize) {
+        redirectWithMessage('Profile photo must be smaller than 2MB.', 'error', $old);
+    }
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo->file($_FILES['avatar']['tmp_name']);
+    $allowedMimes = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp'
+    ];
+
+    if (!isset($allowedMimes[$mimeType])) {
+        redirectWithMessage('Invalid image format. Only JPG, PNG, and WEBP are allowed.', 'error', $old);
+    }
+
+    $uploadDir = __DIR__ . '/../../assets/uploads/avatars/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $ext = $allowedMimes[$mimeType];
+    $fileName = 'doctor_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $targetPath = $uploadDir . $fileName;
+
+    if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $targetPath)) {
+        redirectWithMessage('Unable to save profile photo on server.', 'error', $old);
+    }
+
+    $avatarUrl = $fileName;
+}
+
+function cleanupUploadedAvatar($avatarUrl)
+{
+    if ($avatarUrl !== 'default_avatar.png') {
+        $path = __DIR__ . '/../../assets/uploads/avatars/' . $avatarUrl;
+        if (file_exists($path)) {
+            @unlink($path);
+        }
+    }
+}
+
 try {
     $pdo->beginTransaction();
 
@@ -326,6 +367,7 @@ try {
 
     if ($checkEmail->fetch(PDO::FETCH_ASSOC)) {
         $pdo->rollBack();
+        cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
             'This email is already registered. Please use another email.',
@@ -346,6 +388,7 @@ try {
 
     if (!$checkSpecialization->fetch(PDO::FETCH_ASSOC)) {
         $pdo->rollBack();
+        cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
             'Selected medical specialty does not exist.',
@@ -363,13 +406,11 @@ try {
          LIMIT 1"
     );
 
-    $checkDistrict->execute([
-        $district_id,
-        $city_id
-    ]);
+    $checkDistrict->execute([$district_id, $city_id]);
 
     if (!$checkDistrict->fetch(PDO::FETCH_ASSOC)) {
         $pdo->rollBack();
+        cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
             'The selected district does not belong to the selected city.',
@@ -387,13 +428,11 @@ try {
          LIMIT 1"
     );
 
-    $checkStreet->execute([
-        $street_id,
-        $district_id
-    ]);
+    $checkStreet->execute([$street_id, $district_id]);
 
     if (!$checkStreet->fetch(PDO::FETCH_ASSOC)) {
         $pdo->rollBack();
+        cleanupUploadedAvatar($avatarUrl);
 
         redirectWithMessage(
             'The selected street does not belong to the selected district.',
@@ -403,16 +442,13 @@ try {
     }
 
     // Hash password.
-    $password_hash = password_hash(
-        $password,
-        PASSWORD_DEFAULT
-    );
+    $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
     if ($password_hash === false) {
         throw new RuntimeException('Password hashing failed.');
     }
 
-    // Create user account.
+    // Create user account with avatar_url.
     $insertUser = $pdo->prepare(
         "INSERT INTO users
         (
@@ -421,9 +457,10 @@ try {
             password_hash,
             full_name,
             phone_number,
+            avatar_url,
             is_active
         )
-        VALUES (?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
 
     $insertUser->execute([
@@ -432,6 +469,7 @@ try {
         $password_hash,
         $full_name,
         $phone_number !== '' ? $phone_number : null,
+        $avatarUrl,
         1
     ]);
 
@@ -473,7 +511,6 @@ try {
 
     // Rotate CSRF token.
     unset($_SESSION['csrf_token']);
-
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
     redirectWithMessage(
@@ -486,10 +523,9 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+    cleanupUploadedAvatar($avatarUrl);
 
-    error_log(
-        'Doctor registration database error: ' . $exception->getMessage()
-    );
+    error_log('Doctor registration database error: ' . $exception->getMessage());
 
     if ($exception->getCode() === '23000') {
         redirectWithMessage(
@@ -510,10 +546,9 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+    cleanupUploadedAvatar($avatarUrl);
 
-    error_log(
-        'Doctor registration error: ' . $exception->getMessage()
-    );
+    error_log('Doctor registration error: ' . $exception->getMessage());
 
     redirectWithMessage(
         'Registration failed. Please try again later or contact the administrator.',

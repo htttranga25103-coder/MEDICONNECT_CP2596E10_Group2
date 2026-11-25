@@ -43,8 +43,7 @@ $error = '';
 
 try {
     /*
-     * ADMIN
-     * View all approved doctors, all reviews and system statistics.
+     * ADMIN: View all approved doctors, all reviews and system statistics.
      */
     if ($roleName === 'ADMIN') {
         $selectedDoctor = filter_input(INPUT_GET, 'doctor_id', FILTER_VALIDATE_INT);
@@ -53,7 +52,6 @@ try {
             $selectedDoctor = 0;
         }
 
-        // Doctor statistics.
         $doctorSql = "
             SELECT
                 d.doctor_id,
@@ -67,10 +65,8 @@ try {
             GROUP BY d.doctor_id, u.full_name
             ORDER BY average_rating DESC, total_reviews DESC
         ";
-
         $doctors = $pdo->query($doctorSql)->fetchAll(PDO::FETCH_ASSOC);
 
-        // Overall statistics.
         $statsSql = "
             SELECT
                 COUNT(r.review_id) AS total_reviews,
@@ -80,10 +76,8 @@ try {
             JOIN doctors d ON r.doctor_id = d.doctor_id
             WHERE d.approval_status = 'APPROVED'
         ";
-
         $statistics = $pdo->query($statsSql)->fetch(PDO::FETCH_ASSOC);
 
-        // Rating distribution.
         $distributionSql = "
             SELECT r.rating, COUNT(*) AS total
             FROM doctor_reviews r
@@ -91,12 +85,10 @@ try {
             WHERE d.approval_status = 'APPROVED'
             GROUP BY r.rating
         ";
-
         foreach ($pdo->query($distributionSql)->fetchAll(PDO::FETCH_ASSOC) as $item) {
             $ratingDistribution[(int)$item['rating']] = (int)$item['total'];
         }
 
-        // All reviews, optionally filtered by doctor.
         $reviewSql = "
             SELECT
                 r.review_id,
@@ -118,23 +110,19 @@ try {
         if ($selectedDoctor > 0) {
             $reviewSql .= " AND r.doctor_id = :doctor_id";
         }
-
         $reviewSql .= " ORDER BY r.created_at DESC";
 
         $reviewStmt = $pdo->prepare($reviewSql);
-
         if ($selectedDoctor > 0) {
             $reviewStmt->execute([':doctor_id' => $selectedDoctor]);
         } else {
             $reviewStmt->execute();
         }
-
         $reviews = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /*
-     * DOCTOR
-     * A doctor can only see reviews belonging to their own account.
+     * DOCTOR: A doctor can only see reviews belonging to their own account.
      */
     elseif ($roleName === 'DOCTOR') {
         $doctorStmt = $pdo->prepare("
@@ -143,7 +131,6 @@ try {
             WHERE user_id = :user_id
             LIMIT 1
         ");
-
         $doctorStmt->execute([':user_id' => $userId]);
         $doctorProfile = $doctorStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -160,7 +147,6 @@ try {
             FROM doctor_reviews
             WHERE doctor_id = :doctor_id
         ");
-
         $doctorStatsStmt->execute([':doctor_id' => $doctorId]);
         $statistics = $doctorStatsStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -170,7 +156,6 @@ try {
             WHERE doctor_id = :doctor_id
             GROUP BY rating
         ");
-
         $distributionStmt->execute([':doctor_id' => $doctorId]);
 
         foreach ($distributionStmt->fetchAll(PDO::FETCH_ASSOC) as $item) {
@@ -194,14 +179,12 @@ try {
             WHERE r.doctor_id = :doctor_id
             ORDER BY r.created_at DESC
         ");
-
         $reviewStmt->execute([':doctor_id' => $doctorId]);
         $reviews = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /*
-     * PATIENT
-     * A patient can only see their own appointments and reviews.
+     * PATIENT: A patient can only see their own appointments and reviews.
      */
     elseif ($roleName === 'PATIENT') {
         $patientStmt = $pdo->prepare("
@@ -210,7 +193,6 @@ try {
             WHERE user_id = :user_id
             LIMIT 1
         ");
-
         $patientStmt->execute([':user_id' => $userId]);
         $patientId = (int)$patientStmt->fetchColumn();
 
@@ -218,7 +200,6 @@ try {
             throw new RuntimeException('Patient profile not found.');
         }
 
-        // Completed appointments and their review status.
         $appointmentStmt = $pdo->prepare("
             SELECT
                 a.appointment_id,
@@ -238,11 +219,9 @@ try {
               AND d.approval_status = 'APPROVED'
             ORDER BY a.appointment_id DESC
         ");
-
         $appointmentStmt->execute([':patient_id' => $patientId]);
         $appointments = $appointmentStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Reviews written by this patient only.
         $patientReviewStmt = $pdo->prepare("
             SELECT
                 r.review_id,
@@ -257,7 +236,6 @@ try {
             WHERE r.patient_id = :patient_id
             ORDER BY r.created_at DESC
         ");
-
         $patientReviewStmt->execute([':patient_id' => $patientId]);
         $patientReviews = $patientReviewStmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -278,31 +256,57 @@ $pageDescription = [
     'DOCTOR' => 'View feedback and ratings submitted by your patients.',
     'PATIENT' => 'Review your completed consultations and share your experience.'
 ][$roleName];
-
 ?>
 
-<?php require_once __DIR__ . '/layout_header.php'; ?>
+<?php if ($roleName === 'ADMIN'): ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - <?= e($pageHeading) ?></title>
+    <link rel="stylesheet" href="../assets/css/admin_style.css?v=4">
+    <style>
+        .topbar {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        .topbar-user span {
+            color: #1e293b !important;
+        }
+        .btn-logout {
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+            border-radius: 8px !important;
+            padding: 7px 16px !important;
+            font-weight: 700 !important;
+        }
+    </style>
+<?php else: ?>
+    <?php require_once __DIR__ . '/layout_header.php'; ?>
+<?php endif; ?>
 
 <style>
 .reviews-dashboard {
     max-width: 1200px;
     margin: 0 auto;
-    color: #263746;
+    color: #1e293b;
 }
 
 .reviews-heading {
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
 .reviews-heading h1 {
-    margin: 0 0 8px;
-    font-size: 27px;
-    color: #173b50;
+    margin: 0 0 6px;
+    font-size: 26px;
+    color: #0f172a;
 }
 
 .reviews-heading p {
     margin: 0;
-    color: #718096;
+    color: #64748b;
 }
 
 .review-alert {
@@ -312,22 +316,22 @@ $pageDescription = [
 }
 
 .review-alert.error {
-    background: #fff0f0;
-    color: #a52b2b;
-    border: 1px solid #f2caca;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
 .review-alert.success {
-    background: #eaf8f1;
-    color: #176b45;
-    border: 1px solid #bce5d0;
+    background: #ccfbf1;
+    color: #0f766e;
+    border: 1px solid #99f6e4;
 }
 
 .review-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 17px;
-    margin-bottom: 28px;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
 .review-stat-card,
@@ -335,37 +339,37 @@ $pageDescription = [
 .review-doctor-card,
 .review-appointment-card,
 .review-item {
-    background: #fff;
-    border: 1px solid #e5ebef;
-    border-radius: 11px;
-    box-shadow: 0 3px 12px rgba(25, 55, 75, .045);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .review-stat-card {
-    padding: 20px;
+    padding: 18px 20px;
 }
 
 .review-stat-card span {
     display: block;
-    color: #718096;
+    color: #64748b;
     font-size: 13px;
-    margin-bottom: 9px;
+    margin-bottom: 8px;
 }
 
 .review-stat-card strong {
-    font-size: 27px;
-    color: #173b50;
+    font-size: 26px;
+    color: #0f766e;
 }
 
 .review-panel {
     padding: 22px;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
 .review-panel h2 {
-    font-size: 19px;
+    font-size: 18px;
     margin: 0 0 18px;
-    color: #173b50;
+    color: #0f172a;
 }
 
 .review-grid {
@@ -381,20 +385,20 @@ $pageDescription = [
 
 .review-doctor-card h3,
 .review-appointment-card h3 {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     font-size: 16px;
-    color: #173b50;
+    color: #0f172a;
 }
 
 .review-stars {
-    color: #e6a000;
+    color: #f59e0b;
     letter-spacing: 2px;
-    font-size: 20px;
-    margin: 7px 0;
+    font-size: 19px;
+    margin: 6px 0;
 }
 
 .review-muted {
-    color: #718096;
+    color: #64748b;
     font-size: 13px;
 }
 
@@ -402,44 +406,45 @@ $pageDescription = [
     display: inline-block;
     margin-top: 12px;
     padding: 9px 15px;
-    background: #146d75;
-    color: #fff;
-    border-radius: 6px;
+    background: #0f766e;
+    color: #ffffff;
+    border-radius: 7px;
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
+    transition: background 0.15s ease;
 }
 
 .review-button:hover {
-    background: #103c4b;
-    color: #fff;
+    background: #115e59;
+    color: #ffffff;
 }
 
 .review-status {
     display: inline-block;
-    padding: 5px 9px;
-    border-radius: 20px;
+    padding: 4px 10px;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
 }
 
 .review-status.done {
-    color: #176b45;
-    background: #e4f5eb;
+    color: #0f766e;
+    background: #ccfbf1;
 }
 
 .review-status.waiting {
-    color: #946200;
-    background: #fff3d6;
+    color: #92400e;
+    background: #fef3c7;
 }
 
 .review-list {
     display: grid;
-    gap: 15px;
+    gap: 14px;
 }
 
 .review-item {
-    padding: 19px;
+    padding: 18px;
 }
 
 .review-item-header {
@@ -452,19 +457,19 @@ $pageDescription = [
 
 .review-item h3 {
     margin: 0;
-    color: #173b50;
+    color: #0f172a;
     font-size: 16px;
 }
 
 .review-comment {
-    margin: 12px 0;
-    line-height: 1.65;
+    margin: 10px 0;
+    line-height: 1.6;
     overflow-wrap: anywhere;
 }
 
 .review-meta {
-    color: #718096;
-    font-size: 12px;
+    color: #64748b;
+    font-size: 12.5px;
 }
 
 .review-filter {
@@ -478,25 +483,31 @@ $pageDescription = [
 .review-filter label {
     display: block;
     font-size: 13px;
+    font-weight: 600;
     margin-bottom: 6px;
-    color: #536575;
+    color: #475569;
 }
 
 .review-filter select {
     min-width: 230px;
-    padding: 10px;
-    border: 1px solid #d7e0e5;
-    border-radius: 6px;
-    background: #fff;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
 }
 
 .review-filter button {
-    padding: 10px 17px;
+    padding: 9px 17px;
     border: 0;
-    border-radius: 6px;
-    background: #146d75;
-    color: #fff;
+    border-radius: 7px;
+    background: #0f766e;
+    color: #ffffff;
+    font-weight: 600;
     cursor: pointer;
+}
+
+.review-filter button:hover {
+    background: #115e59;
 }
 
 .rating-distribution {
@@ -514,22 +525,22 @@ $pageDescription = [
 
 .rating-track {
     height: 9px;
-    border-radius: 10px;
-    background: #edf1f3;
+    border-radius: 999px;
+    background: #e2e8f0;
     overflow: hidden;
 }
 
 .rating-fill {
     height: 100%;
-    background: #e6a000;
-    border-radius: 10px;
+    background: #f59e0b;
+    border-radius: 999px;
 }
 
 .review-empty {
     padding: 20px;
     text-align: center;
-    color: #718096;
-    background: #f8fafb;
+    color: #64748b;
+    background: #f8fafc;
     border-radius: 8px;
 }
 
@@ -544,12 +555,39 @@ $pageDescription = [
 }
 </style>
 
+<?php if ($roleName === 'ADMIN'): ?>
+</head>
+<body>
+<div class="admin-wrapper">
+    <!-- SHARED ADMIN SIDEBAR WITH ICONS -->
+    <?php
+        $adminActivePage = 'reviews';
+        require_once __DIR__ . '/../includes/admin_sidebar.php';
+    ?>
+
+    <div class="main-area">
+        <header class="topbar">
+            <div class="topbar-user" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: 700;">
+                    <?= e($pageHeading) ?> — Welcome, <strong><?= e($_SESSION['full_name'] ?? 'Admin') ?></strong>
+                </span>
+                <a href="../auth/logout.php" class="btn-logout" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
+            </div>
+        </header>
+
+        <div class="content-container">
+<?php endif; ?>
+
 <main class="reviews-dashboard">
 
-    <section class="reviews-heading">
-        <h1><?= e($pageHeading) ?></h1>
-        <p><?= e($pageDescription) ?></p>
-    </section>
+    <?php if ($roleName !== 'ADMIN'): ?>
+        <section class="reviews-heading">
+            <h1><?= e($pageHeading) ?></h1>
+            <p><?= e($pageDescription) ?></p>
+        </section>
+    <?php else: ?>
+        <p style="color: #64748b; margin-bottom: 18px;"><?= e($pageDescription) ?></p>
+    <?php endif; ?>
 
     <?php if ($error !== ''): ?>
         <div class="review-alert error"><?= e($error) ?></div>
@@ -639,7 +677,7 @@ $pageDescription = [
                 </div>
 
                 <button type="submit">Search</button>
-                <a class="review-button" href="index.php">Clear Filter</a>
+                <a class="review-button" style="margin-top:0; background:#64748b;" href="index.php">Clear Filter</a>
             </form>
 
             <?php if ($reviews): ?>
@@ -835,4 +873,21 @@ $pageDescription = [
 
 </main>
 
-<?php require_once __DIR__ . '/layout_footer.php'; ?>
+<?php if ($roleName === 'ADMIN'): ?>
+        </div><!-- /.content-container -->
+
+        <footer class="admin-footer">
+            <div>&copy; <?= date('Y') ?> MediConnect. All rights reserved.</div>
+            <div class="footer-links">
+                <a href="#">Terms</a>
+                <a href="#">Privacy</a>
+                <a href="#">Support</a>
+            </div>
+        </footer>
+    </div><!-- /.main-area -->
+</div><!-- /.admin-wrapper -->
+</body>
+</html>
+<?php else: ?>
+    <?php require_once __DIR__ . '/layout_footer.php'; ?>
+<?php endif; ?>
