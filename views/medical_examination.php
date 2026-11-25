@@ -60,7 +60,7 @@ $formNotes = $_POST['symptoms'] ?? ($profile['symptoms_note'] ?? '');
 $e = fn($v) => htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8');
 
 $patientCode = 'BN-' . date('Y', strtotime($profile['booking_time'] ?: 'now')) . '-' . str_pad((string)$profile['patient_id'], 4, '0', STR_PAD_LEFT);
-$appointmentTime = !empty($profile['booking_time']) ? date('d M Y - H:i', strtotime($profile['booking_time'])) : 'Chưa xác định';
+$appointmentTime = !empty($profile['booking_time']) ? date('d M Y - H:i', strtotime($profile['booking_time'])) : 'Undetermined';
 $otherVisits = array_filter($history, fn($h) => (int)$h['appointment_id'] !== $appointment_id);
 $isNewVisit = empty($otherVisits);
 ?>
