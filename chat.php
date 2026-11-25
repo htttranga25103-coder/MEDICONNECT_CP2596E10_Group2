@@ -53,7 +53,7 @@ function resolveUserAvatar(?string $avatarUrl): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Consultation Chat</title>
     <link rel="stylesheet" href="assets/css/patient_booking.css?v=5">
-    <link rel="stylesheet" href="assets/css/chat_style.css?v=2">
+    <link rel="stylesheet" href="assets/css/chat_style.css?v=3">
     <style>
         .navbar-container { gap: 16px; }
         .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
