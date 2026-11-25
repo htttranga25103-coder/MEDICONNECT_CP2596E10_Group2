@@ -92,6 +92,12 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Book a Doctor Appointment</title>
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=5">
+    <style>
+        .navbar-container { gap: 16px; }
+        .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
+        .nav-links > li { position: relative; white-space: nowrap; }
+        .nav-links a { white-space: nowrap; }
+    </style>
 </head>
 <body>
 <nav class="patient-navbar">
@@ -99,11 +105,12 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
         <a href="../index.php" class="brand-logo">MediConnect</a>
 
         <ul class="nav-links">
-            <li><a href="../index.php">Home / News</a></li>
+            <li><a href="../index.php">Home</a></li>
             <li><a href="book_appointment.php" class="active">Book Appointment</a></li>
             <li><a href="my_appointments.php">My Appointments</a></li>
             <li><a href="../chat.php">Consultation Chat</a></li>
-            <li><a href="../auth/profile.php">My Profile</a></li>
+            <li><a href="../articles/news.php">Articles</a></li>
+            <li><a href="../reviews/index.php">Reviews</a></li>
         </ul>
 
         <div class="nav-user">
@@ -191,8 +198,8 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
                     <div class="doctor-card <?= ($selectedDoctorId === (int)$doc['doctor_id']) ? 'selected' : '' ?>">
                         <div>
                             <div class="doc-card-header">
-                                <img src="<?= htmlspecialchars($docAvatarSrc) ?>" 
-                                     alt="Dr. <?= htmlspecialchars($doc['full_name']) ?>" 
+                                <img src="<?= htmlspecialchars($docAvatarSrc) ?>"
+                                     alt="Dr. <?= htmlspecialchars($doc['full_name']) ?>"
                                      class="doc-avatar">
                                 <div>
                                     <div class="doc-name">Dr. <?= htmlspecialchars($doc['full_name']) ?></div>
@@ -204,7 +211,7 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
                             <div class="doc-meta"><strong>Workplace:</strong> <?= htmlspecialchars($doc['work_place'] ?? 'N/A') ?> <?= !empty($doc['city_name']) ? '(' . htmlspecialchars($doc['city_name']) . ')' : '' ?></div>
                         </div>
                         <div class="doc-card-footer">
-                            <a href="book_appointment.php?<?= http_build_query($docLinkParams) ?>#booking-section" 
+                            <a href="book_appointment.php?<?= http_build_query($docLinkParams) ?>#booking-section"
                                class="btn-mc btn-mc-teal w-100">
                                 View Profile & Schedule
                             </a>
@@ -231,7 +238,7 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
                     <?php endif; ?>
 
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a href="<?= $buildPageUrl($i) ?>" 
+                        <a href="<?= $buildPageUrl($i) ?>"
                            class="page-link <?= ($i === $currentPage) ? 'active' : '' ?>">
                             <?= $i ?>
                         </a>
@@ -266,8 +273,8 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
 
             <div class="profile-box">
                 <div class="profile-header-flex">
-                    <img src="<?= htmlspecialchars($selectedAvatarSrc) ?>" 
-                         alt="Dr. <?= htmlspecialchars($selectedDoctor['full_name']) ?>" 
+                    <img src="<?= htmlspecialchars($selectedAvatarSrc) ?>"
+                         alt="Dr. <?= htmlspecialchars($selectedDoctor['full_name']) ?>"
                          class="profile-avatar-lg">
                     <div>
                         <h3 class="profile-title">
@@ -334,8 +341,8 @@ $schedules      = $selectedDoctor ? $apptManager->getDoctorSchedules($selectedDo
                                     $timeLabel = date('H:i', strtotime($sch['start_time'])) . ' - ' . date('H:i', strtotime($sch['end_time']));
                                 ?>
                                 <?php if ((int)$sch['is_available'] === 1): ?>
-                                    <button type="button" class="slot-label slot-btn" 
-                                            data-id="<?= $sch['schedule_id'] ?>" 
+                                    <button type="button" class="slot-label slot-btn"
+                                            data-id="<?= $sch['schedule_id'] ?>"
                                             onclick="selectSlot(this, <?= $sch['schedule_id'] ?>)">
                                         <div><?= $dateLabel ?></div>
                                         <div class="slot-time"><?= $timeLabel ?></div>

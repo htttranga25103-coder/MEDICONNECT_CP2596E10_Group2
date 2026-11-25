@@ -37,15 +37,24 @@ if ($doctor) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediConnect - Doctor Dashboard</title>
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=2">
+    <style>
+        .navbar-container { gap: 16px; }
+        .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
+        .nav-links > li { position: relative; white-space: nowrap; }
+        .nav-links a { white-space: nowrap; }
+    </style>
 </head>
 <body>
 
 <nav class="patient-navbar">
     <div class="navbar-container">
-        <a href="dashboard.php" class="brand-logo">MediConnect</a>
+        <a href="../index.php" class="brand-logo">MediConnect</a>
         <ul class="nav-links">
-            <li><a href="dashboard.php" class="active">Doctor Dashboard</a></li>
-            <li><a href="../chat.php">Patient Chat</a></li>
+            <li><a href="../index.php">Home</a></li>
+            <li><a href="dashboard.php" class="active">Doctor Portal</a></li>
+            <li><a href="../chat.php">Consultation Chat</a></li>
+            <li><a href="../articles/news.php">Articles</a></li>
+            <li><a href="../reviews/index.php">Reviews</a></li>
         </ul>
         <div class="nav-user">
             <span>Dr. <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'Doctor') ?></strong></span>
@@ -88,10 +97,10 @@ if ($doctor) {
                         <tbody>
                             <?php foreach ($appointments as $app): ?>
                                 <?php
-                                    $dateVal = $app['appointment_date'] 
-                                            ?? $app['scheduled_date'] 
-                                            ?? $app['date'] 
-                                            ?? $app['created_at'] 
+                                    $dateVal = $app['appointment_date']
+                                            ?? $app['scheduled_date']
+                                            ?? $app['date']
+                                            ?? $app['created_at']
                                             ?? 'N/A';
                                     $timeVal = $app['time_slot'] ?? $app['start_time'] ?? '';
                                 ?>
@@ -106,7 +115,7 @@ if ($doctor) {
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="../chat.php?partner_id=<?= $app['patient_user_id'] ?>" 
+                                        <a href="../chat.php?partner_id=<?= $app['patient_user_id'] ?>"
                                            style="color:#168077; font-weight:700; text-decoration:none;">
                                              Chat with Patient →
                                         </a>

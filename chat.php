@@ -4,7 +4,7 @@ require_once __DIR__ . '/config/MyConnection.php';
 require_once __DIR__ . '/models/ChatManager.php';
 
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_name'] ?? '', ['PATIENT', 'DOCTOR'])) {
-    header("Location: login.php");
+    header("Location: auth/login.php");
     exit();
 }
 
@@ -54,6 +54,12 @@ function resolveUserAvatar(?string $avatarUrl): string {
     <title>MediConnect - Consultation Chat</title>
     <link rel="stylesheet" href="assets/css/patient_booking.css?v=5">
     <link rel="stylesheet" href="assets/css/chat_style.css?v=2">
+    <style>
+        .navbar-container { gap: 16px; }
+        .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
+        .nav-links > li { position: relative; white-space: nowrap; }
+        .nav-links a { white-space: nowrap; }
+    </style>
 </head>
 <body>
 <nav class="patient-navbar">
@@ -61,16 +67,18 @@ function resolveUserAvatar(?string $avatarUrl): string {
         <a href="index.php" class="brand-logo">MediConnect</a>
 
         <ul class="nav-links">
-            <li><a href="index.php">Home / News</a></li>
-            <?php if ($role_name === 'PATIENT'): ?>
+            <li><a href="index.php">Home</a></li>
+            <?php if ($role_name === 'DOCTOR'): ?>
+                <li><a href="doctor/dashboard.php">Doctor Portal</a></li>
+                <li><a href="chat.php" class="active">Consultation Chat</a></li>
+                <li><a href="articles/news.php">Articles</a></li>
+                <li><a href="reviews/index.php">Reviews</a></li>
+            <?php elseif ($role_name === 'PATIENT'): ?>
                 <li><a href="patient/book_appointment.php">Book Appointment</a></li>
                 <li><a href="patient/my_appointments.php">My Appointments</a></li>
                 <li><a href="chat.php" class="active">Consultation Chat</a></li>
-                <li><a href="auth/profile.php">My Profile</a></li>
-            <?php else: ?>
-                <li><a href="doctor/dashboard.php">Doctor Dashboard</a></li>
-                <li><a href="chat.php" class="active">Patient Chat</a></li>
-                <li><a href="articles/manage.php">Manage Articles</a></li>
+                <li><a href="articles/news.php">Articles</a></li>
+                <li><a href="reviews/index.php">Reviews</a></li>
             <?php endif; ?>
         </ul>
 
@@ -91,11 +99,11 @@ function resolveUserAvatar(?string $avatarUrl): string {
             <div class="contact-list">
                 <?php if (count($contacts) > 0): ?>
                     <?php foreach ($contacts as $c): ?>
-                        <a href="chat.php?partner_id=<?= $c['user_id'] ?>" 
+                        <a href="chat.php?partner_id=<?= $c['user_id'] ?>"
                            class="contact-item <?= ($partner_id === (int)$c['user_id']) ? 'active' : '' ?>">
                             <div class="contact-left">
-                                <img src="<?= htmlspecialchars(resolveUserAvatar($c['avatar_url'] ?? null)) ?>" 
-                                     alt="Avatar" 
+                                <img src="<?= htmlspecialchars(resolveUserAvatar($c['avatar_url'] ?? null)) ?>"
+                                     alt="Avatar"
                                      class="chat-contact-avatar">
                                 <div>
                                     <div class="contact-name">
@@ -117,8 +125,8 @@ function resolveUserAvatar(?string $avatarUrl): string {
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div style="padding: 20px; font-size: 13.5px; color: #64748b; text-align: center;">
-                        <?= ($role_name === 'PATIENT') 
-                            ? 'Book an appointment with a doctor first to start chatting.' 
+                        <?= ($role_name === 'PATIENT')
+                            ? 'Book an appointment with a doctor first to start chatting.'
                             : 'No patients have booked an appointment with you yet.' ?>
                     </div>
                 <?php endif; ?>
@@ -129,8 +137,8 @@ function resolveUserAvatar(?string $avatarUrl): string {
             <?php if ($partner): ?>
                 <div class="chat-header">
                     <div class="chat-header-info">
-                        <img src="<?= htmlspecialchars(resolveUserAvatar($partner['avatar_url'] ?? null)) ?>" 
-                             alt="Avatar" 
+                        <img src="<?= htmlspecialchars(resolveUserAvatar($partner['avatar_url'] ?? null)) ?>"
+                             alt="Avatar"
                              class="chat-header-avatar">
                         <div>
                             <div class="chat-partner-title">

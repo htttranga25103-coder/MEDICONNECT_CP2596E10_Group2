@@ -1,5 +1,7 @@
-
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once __DIR__ . '/../config/database.php';
 
@@ -12,6 +14,8 @@ function e($value)
         'UTF-8'
     );
 }
+
+$docNavRole = $_SESSION['role_name'] ?? '';
 
 // Get search keyword safely.
 $keyword = $_GET['keyword'] ?? '';
@@ -120,7 +124,7 @@ try {
             justify-content: space-between;
             align-items: center;
             gap: 20px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .brand {
@@ -128,19 +132,21 @@ try {
             font-size: 25px;
             font-weight: 800;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .header-nav {
             display: flex;
             align-items: center;
-            gap: 25px;
-            flex-wrap: wrap;
+            gap: 18px;
+            flex-wrap: nowrap;
         }
 
         .header-nav a {
             color: white;
             font-size: 14px;
             font-weight: 600;
+            white-space: nowrap;
             transition: 0.2s;
         }
 
@@ -464,58 +470,6 @@ try {
             font-size: 13px;
         }
 
-        /* RESPONSIVE */
-
-        @media (max-width: 750px) {
-
-            .doctor-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero h1 {
-                font-size: 30px;
-            }
-
-            .site-header {
-                padding: 18px 5%;
-            }
-
-            .header-nav {
-                gap: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-
-            .search-form {
-                flex-direction: column;
-            }
-
-            .search-input {
-                width: 100%;
-            }
-
-            .doctor-top {
-                flex-wrap: wrap;
-            }
-
-            .approved-label {
-                margin-left: 0;
-            }
-
-            .doctor-info {
-                grid-template-columns: 1fr;
-            }
-
-            .register-panel {
-                padding: 22px;
-            }
-
-            .register-panel .btn {
-                width: 100%;
-            }
-        }
-
     </style>
 
 </head>
@@ -530,19 +484,31 @@ try {
     </a>
 
     <nav class="header-nav">
+        <a href="../index.php">Home</a>
 
-        <a href="../index.php">
-            Home
-        </a>
-
-        <a href="index.php">
-            Find a Doctor
-        </a>
-
-        <a href="register.php">
-            Doctor Registration
-        </a>
-
+        <?php if ($docNavRole === 'ADMIN'): ?>
+            <a href="../admin/manage_patients.php">Manage Patients</a>
+            <a href="admin.php">Manage Doctors</a>
+            <a href="../reviews/index.php">Reviews Doctor</a>
+            <a href="../articles/manage.php">Manage Articles</a>
+            <a href="../articles/news.php">All Articles &amp; Comments</a>
+            <a href="../locations/index.php">Manage Locations</a>
+        <?php elseif ($docNavRole === 'DOCTOR'): ?>
+            <a href="../doctor/dashboard.php">Doctor Portal</a>
+            <a href="../chat.php">Consultation Chat</a>
+            <a href="../articles/news.php">Articles</a>
+            <a href="../reviews/index.php">Reviews</a>
+        <?php elseif ($docNavRole === 'PATIENT'): ?>
+            <a href="../patient/book_appointment.php">Book Appointment</a>
+            <a href="../patient/my_appointments.php">My Appointments</a>
+            <a href="../chat.php">Consultation Chat</a>
+            <a href="../articles/news.php">Articles</a>
+            <a href="../reviews/index.php">Reviews</a>
+        <?php else: ?>
+            <a href="../articles/news.php">All Articles</a>
+            <a href="register.php">Doctor Register</a>
+            <a href="../auth/login.php">Log in</a>
+        <?php endif; ?>
     </nav>
 
 </header>
@@ -637,9 +603,9 @@ try {
                                     <?= e($doctor['full_name']) ?>
                                 </h3>
 
-                                <p class="doctor-specialization">
-                                    <?= e($doctor['specialization_name'] ?? 'General Practitioner') ?>
-                                </p>
+                                <div class="doctor-specialization">
+                                    <?= e($doctor['specialization_name'] ?? 'General Medicine') ?>
+                                </div>
 
                             </div>
 
@@ -650,48 +616,32 @@ try {
                         </div>
 
                         <div class="doctor-info">
-
                             <div>
-                                <p class="info-label">Email</p>
-                                <p class="info-value">
-                                    <?= e($doctor['email']) ?>
-                                </p>
+                                <div class="info-label">Degree</div>
+                                <div class="info-value"><?= e($doctor['degree'] ?? 'N/A') ?></div>
                             </div>
-
                             <div>
-                                <p class="info-label">Degree</p>
-                                <p class="info-value">
-                                    <?= e($doctor['degree'] ?? 'Not provided') ?>
-                                </p>
-                            </div>
-
-                            <div>
-                                <p class="info-label">Experience</p>
-                                <p class="info-value">
+                                <div class="info-label">Experience</div>
+                                <div class="info-value">
                                     <?= $doctor['experience_years'] !== null
                                         ? (int)$doctor['experience_years'] . ' years'
-                                        : 'Not provided' ?>
-                                </p>
+                                        : 'N/A' ?>
+                                </div>
                             </div>
-
                             <div>
-                                <p class="info-label">City</p>
-                                <p class="info-value">
-                                    <?= e($doctor['city_name'] ?? 'Not provided') ?>
-                                </p>
+                                <div class="info-label">Workplace</div>
+                                <div class="info-value"><?= e($doctor['work_place'] ?? 'N/A') ?></div>
                             </div>
-
+                            <div>
+                                <div class="info-label">City</div>
+                                <div class="info-value"><?= e($doctor['city_name'] ?? 'N/A') ?></div>
+                            </div>
                         </div>
 
                         <div class="doctor-actions">
-
-                            <a
-                                class="btn btn-profile"
-                                href="profile.php?id=<?= (int)$doctor['doctor_id'] ?>"
-                            >
-                                View Doctor Profile
+                            <a href="profile.php?id=<?= (int)$doctor['doctor_id'] ?>" class="btn btn-profile">
+                                View Profile
                             </a>
-
                         </div>
 
                     </article>
@@ -703,50 +653,29 @@ try {
         <?php else: ?>
 
             <div class="empty-state">
-
-                <h3>No Doctors Found</h3>
-
-                <p>
-                    We could not find any approved doctors matching your search.
-                    Please try another keyword.
-                </p>
-
+                <h3>No doctors found</h3>
+                <p>Try adjusting your search keyword or reset the filter.</p>
             </div>
 
         <?php endif; ?>
 
     </section>
 
-    <!-- REGISTER -->
-    <section class="register-panel">
-
+    <div class="register-panel">
         <div>
-
-            <h3>Are You a Healthcare Professional?</h3>
-
-            <p>
-                Join MediConnect and connect with patients who need your care.
-            </p>
-
+            <h3>Are you a licensed doctor?</h3>
+            <p>Submit your credentials to join MediConnect and connect with patients.</p>
         </div>
+        <a href="register.php" class="btn btn-register">Register as a Doctor</a>
+    </div>
 
-        <a href="register.php" class="btn btn-register">
-            Register as a Doctor
-        </a>
-
-    </section>
-
-    <a href="../index.php" class="back-link">
-        ← Back to Home
-    </a>
+    <a href="../index.php" class="back-link">&larr; Back to Home</a>
 
 </main>
 
 <!-- FOOTER -->
 <footer class="site-footer">
-
     © <?= date('Y') ?> MediConnect. All rights reserved.
-
 </footer>
 
 </body>

@@ -5,6 +5,8 @@ require_once '../includes/functions.php';
 require_once '../includes/csrf.php';
 
 requireStaff();
+$role    = $_SESSION['role_name'] ?? '';
+$isAdmin = $role === 'ADMIN';
 
 function stopWithMessage(int $code, string $text): void {
     http_response_code($code);
@@ -95,9 +97,20 @@ $cancelUrl   = 'manage.php';
             <a href="../index.php" class="sidebar-brand">MediConnect</a>
             <ul class="sidebar-menu">
                 <li><a href="../index.php">Home</a></li>
-                <li><a href="news.php">Public News</a></li>
-                <li><a href="manage.php" class="active">Manage Articles</a></li>
-                <li><a href="../auth/profile.php">My Profile</a></li>
+                <?php if ($isAdmin): ?>
+                    <li><a href="../admin/manage_patients.php">Manage Patients</a></li>
+                    <li><a href="../doctors/admin.php">Manage Doctors</a></li>
+                    <li><a href="../reviews/index.php">Reviews Doctor</a></li>
+                    <li><a href="manage.php" class="active">Manage Articles</a></li>
+                    <li><a href="news.php">All Articles &amp; Comments</a></li>
+                    <li><a href="../locations/index.php">Manage Locations</a></li>
+                <?php else: ?>
+                    <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                    <li><a href="news.php">Articles</a></li>
+                    <li><a href="../reviews/index.php">Reviews</a></li>
+                    <li><a href="manage.php" class="active">Manage Articles</a></li>
+                <?php endif; ?>
             </ul>
         </aside>
 

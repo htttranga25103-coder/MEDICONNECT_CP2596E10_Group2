@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -6,11 +5,11 @@ require_once __DIR__ . '/../config/database.php';
 
 // Only logged-in users with a supported role can access Reviews.
 $userId = filter_var($_SESSION['user_id'] ?? null, FILTER_VALIDATE_INT);
-$roleName = $_SESSION['role_name'] ?? '';
+$roleName = strtoupper((string)($_SESSION['role_name'] ?? ''));
 
 if (!$userId || $userId <= 0 || !in_array($roleName, ['PATIENT', 'DOCTOR', 'ADMIN'], true)) {
-    http_response_code(403);
-    exit('Please log in with a valid MediConnect account to access Doctor Reviews.');
+    header("Location: ../auth/login.php");
+    exit();
 }
 
 // Escape output.

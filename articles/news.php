@@ -28,7 +28,8 @@ try {
     die("Unable to load articles. Please try again later.");
 }
 
-$isStaff = isset($_SESSION['user_id']) && in_array($_SESSION['role_name'] ?? '', ['ADMIN', 'DOCTOR'], true);
+$role    = $_SESSION['role_name'] ?? '';
+$isStaff = isset($_SESSION['user_id']) && in_array($role, ['ADMIN', 'DOCTOR'], true);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -38,34 +39,66 @@ $isStaff = isset($_SESSION['user_id']) && in_array($_SESSION['role_name'] ?? '',
     <title>Medical Articles - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=3">
     <link rel="stylesheet" href="../assets/css/article_style.css?v=2">
+    <style>
+        .navbar-container { gap: 16px; }
+        .nav-links { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; }
+        .nav-links > li { position: relative; white-space: nowrap; }
+        .nav-links a { white-space: nowrap; }
+        .nav-dropdown-menu {
+            display: none; position: absolute; top: 100%; left: 0; min-width: 220px;
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); list-style: none;
+            padding: 6px 0; margin-top: 6px; z-index: 1000;
+        }
+        .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+        .nav-dropdown-menu li a { display: block; padding: 8px 14px; color: #1e293b; text-decoration: none; font-size: 14px; }
+        .nav-dropdown-menu li a:hover { background: #f1f5f9; }
+    </style>
 </head>
 <body>
-    <?php $role = $_SESSION['role_name'] ?? ''; ?>
     <nav class="patient-navbar">
         <div class="navbar-container">
             <a href="../index.php" class="brand-logo">MediConnect</a>
 
             <ul class="nav-links">
                 <li><a href="../index.php">Home</a></li>
-                <li><a href="news.php" class="active">All Articles</a></li>
 
-                <?php if (isset($_SESSION['user_id'])): ?>
-                    <?php if ($role === 'ADMIN'): ?>
-                        <li><a href="../admin/manage_patients.php">Manage Users</a></li>
-                    <?php elseif ($role === 'DOCTOR'): ?>
-                        <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
-                        <li><a href="../chat.php">Patient Chat</a></li>
-                    <?php elseif ($role === 'PATIENT'): ?>
-                        <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
-                        <li><a href="../patient/my_appointments.php">My Appointments</a></li>
-                        <li><a href="../chat.php">Consultation Chat</a></li>
-                    <?php endif; ?>
+                <?php if (isset($_SESSION['user_id']) && $role === 'ADMIN'): ?>
+                    <li><a href="../admin/manage_patients.php">Manage Patients</a></li>
+                    <li class="nav-dropdown">
+                        <a href="../doctors/admin.php">Manage Doctors &#9662;</a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="../doctors/admin.php">Doctors &amp; Approval</a></li>
+                            <li><a href="../doctors/index.php">Doctors List (Public)</a></li>
+                            <li><a href="../doctors/register.php">Doctor Register</a></li>
+                            <li><a href="../reviews/index.php">Reviews Doctor</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-dropdown">
+                        <a href="manage.php" class="active">Manage Articles &#9662;</a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="manage.php">Manage Articles</a></li>
+                            <li><a href="news.php">All Articles &amp; Comments</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="../locations/index.php">Manage Locations</a></li>
 
-                    <?php if (!empty($isStaff)): ?>
-                        <li><a href="manage.php">Manage Articles</a></li>
-                    <?php endif; ?>
+                <?php elseif (isset($_SESSION['user_id']) && $role === 'DOCTOR'): ?>
+                    <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                    <li><a href="news.php" class="active">Articles</a></li>
+                    <li><a href="../reviews/index.php">Reviews</a></li>
 
-                    <li><a href="../auth/profile.php">My Profile</a></li>
+                <?php elseif (isset($_SESSION['user_id']) && $role === 'PATIENT'): ?>
+                    <li><a href="../patient/book_appointment.php">Book Appointment</a></li>
+                    <li><a href="../patient/my_appointments.php">My Appointments</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                    <li><a href="news.php" class="active">Articles</a></li>
+                    <li><a href="../reviews/index.php">Reviews</a></li>
+
+                <?php else: ?>
+                    <li><a href="news.php" class="active">All Articles</a></li>
+                    <li><a href="../doctors/register.php">Doctor Register</a></li>
                 <?php endif; ?>
             </ul>
 

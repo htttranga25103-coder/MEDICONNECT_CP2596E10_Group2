@@ -1,11 +1,10 @@
-
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 $currentPage = basename($_SERVER['SCRIPT_NAME'] ?? '');
-$roleName = $_SESSION['role_name'] ?? '';
+$roleName = strtoupper($_SESSION['role_name'] ?? '');
 $fullName = $_SESSION['full_name'] ?? 'User';
 
 $pageTitle = 'MediConnect - Doctor Reviews';
@@ -65,13 +64,19 @@ $roleLabel = [
 
         <?php if ($roleName === 'ADMIN'): ?>
 
-            <a href="../admin/manage_patients.php" class="sidebar-brand">
+            <a href="../index.php" class="sidebar-brand">
                 MediConnect
             </a>
 
             <div class="reviews-sidebar-subtitle">Administration</div>
 
             <ul class="sidebar-menu">
+
+                <li>
+                    <a href="../index.php">
+                        Home
+                    </a>
+                </li>
 
                 <li>
                     <a href="../admin/manage_patients.php">
@@ -86,9 +91,15 @@ $roleLabel = [
                 </li>
 
                 <li>
+                    <a href="../articles/news.php">
+                        Articles
+                    </a>
+                </li>
+
+                <li>
                     <a href="index.php"
-                       class="<?= reviewsSidebarActive(['index.php'], $currentPage) ?>">
-                        Doctor Reviews
+                       class="<?= reviewsSidebarActive(['index.php', 'create.php'], $currentPage) ?>">
+                        Reviews
                     </a>
                 </li>
 
@@ -102,7 +113,7 @@ $roleLabel = [
 
         <?php elseif ($roleName === 'DOCTOR'): ?>
 
-            <a href="../doctor/dashboard.php" class="sidebar-brand">
+            <a href="../index.php" class="sidebar-brand">
                 MediConnect
             </a>
 
@@ -111,15 +122,33 @@ $roleLabel = [
             <ul class="sidebar-menu">
 
                 <li>
+                    <a href="../index.php">
+                        Home
+                    </a>
+                </li>
+
+                <li>
                     <a href="../doctor/dashboard.php">
-                        Doctor Dashboard
+                        Doctor Portal
+                    </a>
+                </li>
+
+                <li>
+                    <a href="../chat.php">
+                        Consultation Chat
+                    </a>
+                </li>
+
+                <li>
+                    <a href="../articles/news.php">
+                        Articles
                     </a>
                 </li>
 
                 <li>
                     <a href="index.php"
-                       class="<?= reviewsSidebarActive(['index.php'], $currentPage) ?>">
-                        My Patient Reviews
+                       class="<?= reviewsSidebarActive(['index.php', 'create.php'], $currentPage) ?>">
+                        Reviews
                     </a>
                 </li>
 
@@ -127,13 +156,19 @@ $roleLabel = [
 
         <?php elseif ($roleName === 'PATIENT'): ?>
 
-            <a href="../patient/book_appointment.php" class="sidebar-brand">
+            <a href="../index.php" class="sidebar-brand">
                 MediConnect
             </a>
 
             <div class="reviews-sidebar-subtitle">Patient Portal</div>
 
             <ul class="sidebar-menu">
+
+                <li>
+                    <a href="../index.php">
+                        Home
+                    </a>
+                </li>
 
                 <li>
                     <a href="../patient/book_appointment.php">
@@ -148,9 +183,21 @@ $roleLabel = [
                 </li>
 
                 <li>
+                    <a href="../chat.php">
+                        Consultation Chat
+                    </a>
+                </li>
+
+                <li>
+                    <a href="../articles/news.php">
+                        Articles
+                    </a>
+                </li>
+
+                <li>
                     <a href="index.php"
-                       class="<?= reviewsSidebarActive(['index.php'], $currentPage) ?>">
-                        My Doctor Reviews
+                       class="<?= reviewsSidebarActive(['index.php', 'create.php'], $currentPage) ?>">
+                        Reviews
                     </a>
                 </li>
 

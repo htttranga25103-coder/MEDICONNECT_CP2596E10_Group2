@@ -1,4 +1,3 @@
-
 <?php
 
 // Check ADMIN permission.
@@ -112,6 +111,8 @@ try {
     $loadError = 'Unable to load doctor information. Please try again later.';
 }
 
+$docNavRole = $_SESSION['role_name'] ?? '';
+
 ?>
 
 <!DOCTYPE html>
@@ -129,6 +130,88 @@ try {
     <link rel="stylesheet" href="../assets/css/admin_style.css?v=3">
 
     <style>
+
+        .doctor-module-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 12px;
+            padding: 10px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            overflow: visible;
+        }
+
+        .doctor-module-brand {
+            font-weight: 700;
+            color: #0f766e;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .doctor-module-links {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 8px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doctor-module-links > li {
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .doctor-module-links a {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #1e293b;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .doctor-module-links a:hover,
+        .doctor-module-links a.active {
+            background: #0f766e;
+            color: #ffffff;
+        }
+
+        .doctor-module-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 215px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            list-style: none;
+            padding: 6px 0;
+            margin-top: 4px;
+            z-index: 1000;
+        }
+
+        .doctor-module-dropdown:hover .doctor-module-dropdown-menu {
+            display: block;
+        }
+
+        .doctor-module-dropdown-menu li a {
+            display: block;
+            border-radius: 0;
+            padding: 8px 14px;
+            color: #1e293b;
+        }
+
+        .doctor-module-dropdown-menu li a:hover {
+            background: #f1f5f9;
+            color: #0f766e;
+        }
 
         .edit-form {
             padding: 22px;
@@ -178,38 +261,94 @@ try {
 
 <body>
 
+<nav class="doctor-module-nav">
+    <a href="../index.php" class="doctor-module-brand">MediConnect</a>
+
+    <ul class="doctor-module-links">
+        <li><a href="../index.php">Home</a></li>
+
+        <?php if ($docNavRole === 'ADMIN'): ?>
+            <li><a href="../admin/manage_patients.php">Manage Patients</a></li>
+
+            <li class="doctor-module-dropdown">
+                <a href="admin.php" class="active">Manage Doctors &#9662;</a>
+                <ul class="doctor-module-dropdown-menu">
+                    <li><a href="admin.php">Doctors &amp; Approval</a></li>
+                    <li><a href="index.php">Doctors List (Public)</a></li>
+                    <li><a href="register.php">Doctor Register</a></li>
+                    <li><a href="../reviews/index.php">Reviews Doctor</a></li>
+                </ul>
+            </li>
+
+            <li class="doctor-module-dropdown">
+                <a href="../articles/manage.php">Manage Articles &#9662;</a>
+                <ul class="doctor-module-dropdown-menu">
+                    <li><a href="../articles/manage.php">Add / Edit / Delete Articles</a></li>
+                    <li><a href="../articles/news.php">All Articles &amp; Comments</a></li>
+                </ul>
+            </li>
+
+            <li><a href="../locations/index.php">Manage Locations</a></li>
+
+        <?php elseif ($docNavRole === 'DOCTOR'): ?>
+            <li><a href="../doctor/dashboard.php">Doctor Portal</a></li>
+            <li><a href="../chat.php">Consultation Chat</a></li>
+            <li><a href="../articles/news.php">Articles</a></li>
+            <li><a href="../reviews/index.php">Reviews</a></li>
+        <?php endif; ?>
+    </ul>
+</nav>
+
 <div class="admin-wrapper">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
 
-        <a href="../admin/manage_patients.php" class="sidebar-brand">
+        <a href="../index.php" class="sidebar-brand">
             MediConnect
         </a>
 
         <ul class="sidebar-menu">
 
             <li>
+                <a href="../index.php">
+                    Home
+                </a>
+            </li>
+
+            <li>
                 <a href="../admin/manage_patients.php">
-                    Patients
+                    Manage Patients
                 </a>
             </li>
 
             <li>
                 <a href="admin.php" class="active">
-                    Doctor Management
+                    Manage Doctors
                 </a>
             </li>
 
             <li>
                 <a href="../reviews/index.php">
-                    Doctor Reviews
+                    Reviews Doctor
+                </a>
+            </li>
+
+            <li>
+                <a href="../articles/manage.php">
+                    Manage Articles
+                </a>
+            </li>
+
+            <li>
+                <a href="../articles/news.php">
+                    All Articles &amp; Comments
                 </a>
             </li>
 
             <li>
                 <a href="../locations/index.php">
-                    Location Management
+                    Manage Locations
                 </a>
             </li>
 
