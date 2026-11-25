@@ -1,11 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/connection.php';
 
-class DoctorDashboard {
-    // Lỗi gần nhất của saveMedicalRecord() để hiển thị khi debug
-    public static $lastError = '';
-
-    // 1. Lấy thông tin bác sĩ để hiển thị lên Banner Welcome
+class DoctorDashboard {   
+    public static $lastError = '';    
     public static function getDoctorInfo($doctor_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -31,8 +28,7 @@ class DoctorDashboard {
         $conn->close();
         return $doctor;
     }
-
-    // 2. Lấy danh sách lịch hẹn của bác sĩ kèm gender và thông tin bệnh nhân
+    
     public static function getDoctorAppointments($doctor_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -47,8 +43,7 @@ class DoctorDashboard {
                 a.status,
                 a.symptoms_note,
                 p.date_of_birth,
-                p.gender,
-                
+                p.gender,                
                 p.address,
                 u.full_name AS patient_name,
                 u.phone_number AS patient_phone,
@@ -72,12 +67,10 @@ class DoctorDashboard {
         $conn->close();
         return $appointments;
     }
-
-    // 3. Lấy chi tiết hồ sơ bệnh nhân và thông tin cuộc hẹn theo appointment_id
+   
     public static function getPatientProfileByAppointment($appointment_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
-
         $appointment_id = (int)$appointment_id;
         $sql = "
             SELECT 
@@ -91,7 +84,7 @@ class DoctorDashboard {
                 p.address,
                 p.date_of_birth,
                 p.gender,
-                COALESCE(NULLIF(TRIM(p.gender), ''), 'Chưa cập nhật') AS gender_display,
+                COALESCE(NULLIF(TRIM(p.gender), ''), 'Not yet updated') AS gender_display,
                 u.full_name,
                 u.email,
                 u.phone_number,
@@ -109,9 +102,7 @@ class DoctorDashboard {
         $conn->close();
         return $profile;
     }
-
-    // 4. Lấy lịch sử khám bệnh của bệnh nhân: các hồ sơ trong medical_records
-    //    (loại trừ lịch hẹn đang mở, vì hồ sơ của nó đã hiện ở khung Clinical Notes)
+    
     public static function getPatientVisitHistory($patient_id, $exclude_appointment_id = 0) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -152,8 +143,7 @@ class DoctorDashboard {
         $conn->close();
         return $history;
     }
-
-    // 5. Cập nhật gender cho bệnh nhân trong bảng patients
+    
     public static function updatePatientGender($patient_id, $gender) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -191,8 +181,7 @@ class DoctorDashboard {
         $conn->close();
         return $updated;
     }
-
-    // 6. Cập nhật trạng thái lịch hẹn
+    
     public static function updateAppointmentStatus($appointment_id, $doctor_id, $status) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -224,8 +213,7 @@ class DoctorDashboard {
         $conn->close();
         return $updated;
     }
-
-    // 7. Lấy hồ sơ bệnh án (medical_records) của một lịch hẹn, nếu đã có
+    
     public static function getMedicalRecordByAppointment($appointment_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -245,10 +233,7 @@ class DoctorDashboard {
         $conn->close();
         return $record;
     }
-
-    // Tự động bỏ chỉ mục UNIQUE trên medical_records.appointment_id (nếu có) để một lịch hẹn
-    // có thể có nhiều hồ sơ. Chạy được trên mọi máy, nếu đã sửa rồi thì không làm gì.
-    // Lưu ý: lệnh ALTER tự commit nên phải gọi TRƯỚC khi mở transaction.
+    
     private static function ensureMedicalRecordsAllowMultiple($conn) {
         static $checked = false;
         if ($checked) {
@@ -282,9 +267,7 @@ class DoctorDashboard {
             error_log('ensureMedicalRecordsAllowMultiple failed: ' . $e->getMessage());
         }
     }
-
-    // 8. Lưu hồ sơ bệnh án vào medical_records và chuyển lịch hẹn sang COMPLETED
-    //    (mỗi lần bấm là thêm một bản ghi mới, không ghi đè). Dùng transaction.
+    
     public static function saveMedicalRecord($appointment_id, $doctor_id, $diagnosis, $treatment_plan, $doctor_notes) {
         $appointment_id = (int)$appointment_id;
         $doctor_id = (int)$doctor_id;
@@ -303,8 +286,7 @@ class DoctorDashboard {
 
         try {
             $conn->begin_transaction();
-
-            // Lấy patient_id và xác nhận lịch hẹn thuộc bác sĩ này
+           
             $stmt = $conn->prepare("SELECT patient_id FROM appointments WHERE appointment_id = ? AND doctor_id = ? LIMIT 1");
             $stmt->bind_param("ii", $appointment_id, $doctor_id);
             $stmt->execute();
@@ -315,8 +297,7 @@ class DoctorDashboard {
                 throw new Exception('Appointment not found for this doctor');
             }
             $patient_id = (int)$appt['patient_id'];
-
-            // Luôn thêm một bản ghi mới (không ghi đè) để giữ đầy đủ lịch sử khám
+           
             $stmt = $conn->prepare("
                 INSERT INTO medical_records
                     (appointment_id, patient_id, doctor_id, diagnosis, treatment_plan, doctor_notes, created_at, updated_at)
@@ -325,8 +306,7 @@ class DoctorDashboard {
             $stmt->bind_param("iiisss", $appointment_id, $patient_id, $doctor_id, $diagnosis, $treatment_plan, $doctor_notes);
             $stmt->execute();
             $stmt->close();
-
-            // Chuyển trạng thái lịch hẹn sang COMPLETED
+            
             $stmt = $conn->prepare("
                 UPDATE appointments
                 SET status = 'COMPLETED', updated_at = NOW()
