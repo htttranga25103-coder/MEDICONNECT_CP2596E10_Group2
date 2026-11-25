@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/connection.php';
 
-class AdminDashboard {
-    // Đếm số dòng của một bảng (chỉ cho phép các bảng trong danh sách an toàn)
+class AdminDashboard {   
     private static function countTable($conn, $table) {
         $allowed = [
             'doctors', 'patients', 'articles', 'appointments',
@@ -20,8 +19,7 @@ class AdminDashboard {
             return 0;
         }
     }
-
-    // 1. Các con số tổng quan cho thẻ thống kê và dải Quick overview
+    
     public static function getOverviewCounts() {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -40,8 +38,7 @@ class AdminDashboard {
         $conn->close();
         return $counts;
     }
-
-    // 2. Số lịch hẹn theo từng trạng thái
+    
     public static function getAppointmentStatusCounts() {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -57,14 +54,13 @@ class AdminDashboard {
                 }
             }
         } catch (Throwable $e) {
-            // giữ nguyên giá trị 0
+            
         }
 
         $conn->close();
         return $statuses;
     }
-
-    // 3. Các lịch hẹn mới nhất
+    
     public static function getRecentAppointments($limit = 8) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -95,14 +91,13 @@ class AdminDashboard {
                 }
             }
         } catch (Throwable $e) {
-            // trả về danh sách rỗng
+            
         }
 
         $conn->close();
         return $rows;
     }
-
-    // 4. Bác sĩ có nhiều lịch hẹn nhất
+    
     public static function getTopDoctors($limit = 5) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -132,7 +127,7 @@ class AdminDashboard {
                 }
             }
         } catch (Throwable $e) {
-            // trả về danh sách rỗng
+           
         }
 
         $conn->close();
