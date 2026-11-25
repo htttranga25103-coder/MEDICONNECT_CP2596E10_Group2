@@ -23,8 +23,6 @@ body {
     color: var(--text-main);
     line-height: 1.5;
 }
-
-/* Thanh điều hướng (Navbar) */
 .navbar {
     background: #ffffff;
     border-bottom: 1px solid var(--border-color);
@@ -91,8 +89,6 @@ body {
 .btn-outline-sm:hover {
     background: #f1f5f9;
 }
-
-/* Banner xanh ngọc đầu trang */
 .hero-banner {
     background-color: var(--primary);
     color: #ffffff;
@@ -130,8 +126,6 @@ body {
     font-size: 14px;
     opacity: 0.9;
 }
-
-/* Khung nội dung chính */
 .container {
     max-width: 1140px;
     margin: 32px auto;
@@ -162,8 +156,6 @@ body {
     color: var(--text-muted);
     margin-top: 2px;
 }
-
-/* Thông báo Alert */
 .alert {
     padding: 12px 16px;
     border-radius: 8px;
@@ -184,7 +176,6 @@ body {
     border-color: #fecaca;
 }
 
-/* Card & Form */
 .card {
     background: #ffffff;
     border: 1px solid var(--border-color);

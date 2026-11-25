@@ -1,12 +1,6 @@
 <?php
-
-// Check ADMIN permission.
 require_once __DIR__ . '/admin_guard.php';
-
-// Connect to database.
 require_once __DIR__ . '/../config/database.php';
-
-// Escape output to prevent XSS.
 function e($value)
 {
     return htmlspecialchars(
@@ -15,13 +9,9 @@ function e($value)
         'UTF-8'
     );
 }
-
-// Generate CSRF token.
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
-
-// Get search keyword safely.
 $keyword = $_GET['keyword'] ?? '';
 
 if (!is_string($keyword)) {
@@ -33,15 +23,11 @@ $keyword = trim($keyword);
 if (mb_strlen($keyword, 'UTF-8') > 100) {
     $keyword = mb_substr($keyword, 0, 100, 'UTF-8');
 }
-
-// Get message safely.
 $message = $_GET['message'] ?? '';
 
 if (!is_string($message)) {
     $message = '';
 }
-
-// Initialize doctor list and error message.
 $doctors = [];
 $loadError = '';
 

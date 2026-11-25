@@ -31,8 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $apptManager->deleteDoctorSchedule($doctor_id, $schedule_id);
         $_SESSION[$result['status'] ? 'success' : 'error'] = $result['message'];
     }
-
-    // Giữ lại bộ lọc ngày và trang hiện tại sau khi POST
     $redirectParams = array_filter([
         'work_date' => !empty($_POST['current_filter_date']) ? trim($_POST['current_filter_date']) : null,
         'page'      => !empty($_POST['current_page']) && (int)$_POST['current_page'] > 1 ? (int)$_POST['current_page'] : null,
@@ -41,8 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: " . $redirectUrl);
     exit();
 }
-
-// Xử lý phân trang & lọc ngày
 $filterDate     = trim($_GET['work_date'] ?? '');
 $limit          = 9; // 9 lịch mỗi trang (3 hàng x 3 cột)
 $currentPage    = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
@@ -58,8 +54,6 @@ $schedules = $apptManager->getPaginatedSchedulesByDoctor($doctor_id, $limit, $of
 $doctorInfo = $apptManager->getDoctorById($doctor_id);
 $doctorName = $doctorInfo['full_name'] ?? ($_SESSION['full_name'] ?? 'Doctor');
 $specName   = $doctorInfo['specialization_name'] ?? 'Specialist';
-
-// Helper tạo URL giữ nguyên work_date khi chuyển trang
 function buildPageUrl(int $page, string $filterDate): string {
     $params = array_filter([
         'work_date' => $filterDate !== '' ? $filterDate : null,

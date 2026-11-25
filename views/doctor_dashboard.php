@@ -7,8 +7,6 @@ if (!isset($_SESSION['user_id']) || strtoupper($_SESSION['role_name'] ?? '') !==
 
 require_once __DIR__ . '/../config/MyConnection.php';
 require_once __DIR__ . '/../models/doctor_dashboard_class.php';
-
-// Lấy đúng doctor_id theo user_id đang đăng nhập
 $doctor_id = (int)($_SESSION['doctor_id'] ?? 0);
 if ($doctor_id <= 0) {
     $connTmp = MyConnection::connectDatabase();
@@ -60,7 +58,6 @@ foreach ($appointments as $item) {
     <link rel="stylesheet" href="../assets/css/home_style.css?v=5">
 </head>
 <body>
-    <!-- Thanh điều hướng đồng bộ với index.php -->
     <nav class="patient-navbar">
         <div class="navbar-container">
             <a href="../index.php" class="brand-logo">MediConnect</a>
@@ -87,8 +84,6 @@ foreach ($appointments as $item) {
             </div>
         </div>
     </nav>
-
-    <!-- Banner chào mừng dùng class .home-hero của home_style.css -->
     <section class="home-hero">
         <div class="home-hero-inner">
             <div class="home-hero-text">
@@ -106,8 +101,6 @@ foreach ($appointments as $item) {
                 <?= htmlspecialchars($flashMessage) ?>
             </div>
         <?php endif; ?>
-
-        <!-- DANH SÁCH LỊCH HẸN -->
         <section class="home-section">
             <div class="section-bar">
                 <div>
@@ -167,8 +160,6 @@ foreach ($appointments as $item) {
                 </div>
             <?php endif; ?>
         </section>
-
-        <!-- YÊU CẦU ĐẶT LỊCH CHỜ DUYỆT -->
         <section class="home-section">
             <div class="section-bar">
                 <div>
