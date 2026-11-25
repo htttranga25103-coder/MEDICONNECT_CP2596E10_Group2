@@ -25,8 +25,7 @@
             padding: 0 40px 40px 40px;
             box-shadow: 0 0 15px rgba(0,0,0,0.05);
         }
-
-        /* Nút bấm chung */
+        
         .btn-green {
             background-color: #198754;
             color: white;
@@ -51,7 +50,6 @@
             font-weight: bold;
         }
 
-        /* 1. HEADER: Logo bên trái, cụm 3 nút nằm ngang bên phải */
         header {
             display: flex;
             justify-content: space-between;
@@ -70,7 +68,6 @@
             align-items: center;
         }
 
-        /* 2. HERO SECTION: Chia 2 cột (Chữ bên trái - Ảnh bên phải) */
         .hero {
             display: flex;
             align-items: center;
@@ -102,8 +99,7 @@
             max-width: 500px;
             border-radius: 12px;
         }
-
-        /* TIÊU ĐỀ CÁC MỤC */
+        
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -119,8 +115,7 @@
         .section-header p {
             color: #666;
         }
-
-        /* 3. FEATURED DOCTORS: Luôn bật thanh trượt ngang */
+       
         .featured-doctors {
             width: 100%;
             overflow: hidden;
@@ -152,10 +147,9 @@
             border-radius: 8px;
         }
         .card button {
-            margin-top: auto; /* Đẩy nút Book now luôn nằm thẳng hàng dưới đáy card */
+            margin-top: auto; 
         }
-
-        /* Thanh cuộn ngang cho Featured Doctors */
+        
         .doctor-grid::-webkit-scrollbar {
             height: 8px;
         }
@@ -167,8 +161,7 @@
             background: #e9ecef;
             border-radius: 4px;
         }
-
-        /* 4. HEALTH INSIGHTS: Luôn bật thanh trượt ngang */
+        
         .health-insights {
             width: 100%;
             overflow: hidden;
@@ -215,8 +208,7 @@
             background: #e9ecef;
             border-radius: 4px;
         }
-
-        /* 5. FOOTER */
+       
         footer {
             margin-top: 60px;
             padding-top: 30px;
@@ -241,8 +233,7 @@
                 <button class="btn-green">Register as doctor</button>
             </div>
         </header>
-
-        <!-- HERO SECTION (2 CỘT) -->
+        
         <section class="hero">
             <div class="hero-text">
                 <h1>Easy booking. Care that puts you first.</h1>
@@ -255,11 +246,9 @@
         </section>
 
         <?php
-        require_once '../models/homeclass.php';
-        // Lấy tất cả bác sĩ trong database
+        require_once '../models/homeclass.php';        
         $doctors = Doctor::getFeaturedDoctors(); 
         ?>
-
         <!-- FEATURED DOCTORS -->
         <section class="featured-doctors">
             <div class="section-header">
@@ -283,7 +272,7 @@
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p>Không có dữ liệu bác sĩ.</p>
+                    <p>No doctor data.</p>
                 <?php endif; ?>
             </div>
         </section>
@@ -304,8 +293,7 @@
             <div class="article-grid" id="article-grid">
                 <?php if (!empty($articles)): ?>
                     <?php foreach ($articles as $art): ?>
-                        <?php
-                        // Xử lý đường dẫn ảnh: nếu là link http thì giữ nguyên, nếu là tên file thì nối ../images/
+                        <?php                        
                         $thumb = '../images/article1.png';
                         if (!empty($art['thumbnail_url'])) {
                             $thumb = str_starts_with($art['thumbnail_url'], 'http') 
@@ -323,7 +311,7 @@
                         </article>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p>Chưa có bài viết nào.</p>
+                    <p>No articles yet.</p>
                 <?php endif; ?>
             </div>
         </section>
