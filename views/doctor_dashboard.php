@@ -401,7 +401,7 @@ foreach ($appointments as $item) {
                                                 <p style="margin-bottom: 6px;"><strong>Date of Birth:</strong> <?= htmlspecialchars($req['date_of_birth'] ?? 'Chưa cập nhật') ?></p>
                                                 <p style="margin-bottom: 6px;">
                                                     <strong>Gender:</strong>
-                                                    <?= $genderVal !== '' ? htmlspecialchars($genderVal) : 'Chưa cập nhật' ?>
+                                                    <?= $genderVal !== '' ? htmlspecialchars($genderVal) : 'Not yet updated' ?>
                                                 </p>
                                                 <p><strong>Address:</strong> <?= htmlspecialchars($req['address'] ?? 'Chưa cập nhật') ?></p>
                                             </td>
@@ -429,7 +429,7 @@ foreach ($appointments as $item) {
 
                         <!-- ACTION BUTTONS -->
                         <div align="right">
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Từ chối lịch hẹn #<?= $reqId ?>?');">
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Decline an appointment #<?= $reqId ?>?');">
                                 <input type="hidden" name="action" value="update_status">
                                 <input type="hidden" name="appointment_id" value="<?= $reqId ?>">
                                 <input type="hidden" name="status" value="CANCELLED">
