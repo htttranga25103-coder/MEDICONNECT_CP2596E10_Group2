@@ -132,9 +132,15 @@ foreach ($appointments as $item) {
         }
         .appointments-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 24px;
+            align-items: start;
             margin-bottom: 40px;
+        }
+        @media (max-width: 900px) {
+            .appointments-grid {
+            grid-template-columns: 1fr;
+            }
         }
         .appointment-card {
             border: 1px solid #e0e0e0;
@@ -145,6 +151,7 @@ foreach ($appointments as $item) {
             flex-direction: column;
             gap: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            min-width: 0;
         }
         .patient-info {
             display: flex;
@@ -312,9 +319,13 @@ foreach ($appointments as $item) {
                 <?php if (!empty($appointments)): ?>
                     <?php foreach ($appointments as $app): ?>
                         <?php
-                        $formattedTime = !empty($app['booking_time'])
-                            ? date('d M Y - H:i:s', strtotime($app['booking_time']))
-                            : 'Undefined';
+                        $formattedTime = 'Undetermined';
+                        if (!empty($app['scheduled_time'])) {
+                        $formattedTime = date('d M Y, H:i', strtotime($app['scheduled_time']));
+                        if (!empty($app['schedule_end_time'])) {
+                        $formattedTime .= ' – ' . date('H:i', strtotime($app['schedule_end_time']));
+                            }
+                        }
                         ?>
                         <article class="appointment-card">
                             <div class="patient-info">
@@ -376,9 +387,13 @@ foreach ($appointments as $item) {
                 <?php foreach ($pendingAppointments as $req): ?>
                     <?php
                     $reqId = (int)$req['appointment_id'];
-                    $scheduledTime = !empty($req['booking_time'])
-                        ? date('d M Y - H:i:s', strtotime($req['booking_time']))
-                        : 'Chưa xác định';
+                    $scheduledTime = 'Undetermined';
+                    if (!empty($req['scheduled_time'])) {
+                    $scheduledTime = date('d M Y, H:i', strtotime($req['scheduled_time']));
+                    if (!empty($req['schedule_end_time'])) {
+                    $scheduledTime .= ' – ' . date('H:i', strtotime($req['schedule_end_time']));
+                        }
+                    }
                     $genderVal = trim((string)($req['gender'] ?? ''));
                     ?>
                     <fieldset class="pending-request-box">
