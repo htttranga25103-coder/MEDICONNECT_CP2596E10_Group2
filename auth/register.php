@@ -7,7 +7,7 @@ require_once '../includes/csrf.php';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Create an account</title>
+    <title>Create an account patient</title>
     <link rel = "stylesheet" href = "../assets/css/auth_style.css?v=2">
 </head>
 <body>

@@ -1,7 +1,26 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || strtoupper($_SESSION['role_name'] ?? '') !== 'DOCTOR') {
+    header("Location: ../auth/login.php");
+    exit();
+}
+
+require_once __DIR__ . '/../config/MyConnection.php';
 require_once __DIR__ . '/../models/doctor_dashboard_class.php';
-$doctor_id = $_SESSION['doctor_id'] ?? 1;
+
+// Lấy đúng doctor_id theo user_id đang đăng nhập
+$doctor_id = (int)($_SESSION['doctor_id'] ?? 0);
+if ($doctor_id <= 0) {
+    $connTmp = MyConnection::connectDatabase();
+    $stmtTmp = $connTmp->prepare("SELECT doctor_id FROM doctors WHERE user_id = ? LIMIT 1");
+    $uid = (int)$_SESSION['user_id'];
+    $stmtTmp->bind_param("i", $uid);
+    $stmtTmp->execute();
+    $rowTmp = $stmtTmp->get_result()->fetch_assoc();
+    $doctor_id = (int)($rowTmp['doctor_id'] ?? 0);
+    $_SESSION['doctor_id'] = $doctor_id;
+}
+
 $flashMessage = '';
 $flashType = 'success';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
@@ -61,9 +80,30 @@ foreach ($appointments as $item) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
+            padding: 18px 0;
             border-bottom: 1px solid #eee;
             margin-bottom: 30px;
+            gap: 16px;
+        }
+
+        .doc-nav {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            list-style: none;
+        }
+        .doc-nav a {
+            text-decoration: none;
+            color: #334155;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 7px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .doc-nav a:hover, .doc-nav a.active {
+            background-color: #198754;
+            color: #fff;
         }
 
         .flash-box {
@@ -151,6 +191,7 @@ foreach ($appointments as $item) {
             justify-content: space-between;
             align-items: center;
             gap: 12px;
+            flex-wrap: wrap;
         }
         .patient-name {
             font-weight: bold;
@@ -158,17 +199,27 @@ foreach ($appointments as $item) {
             color: #111;
         }
         .btn-start {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             background-color: #0d6efd;
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 11px 20px;
+            padding: 10px 16px;
             cursor: pointer;
+            text-decoration: none;
         }
         .btn-start:hover {
             background-color: #0b5ed7;
+        }
+        .btn-chat-link {
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #198754;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-decoration: none;
         }
         .phone-info {
             font-size: 16px;
@@ -190,32 +241,12 @@ foreach ($appointments as $item) {
             gap: 8px;
             font-weight: bold;
         }
-        .reason-section {
-            border-radius: 10px;
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 16px 18px;
-            flex: 1;
-        }
-        .reason-section .label {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-            color: #6c757d;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        .reason-section p {
-            font-size: 16px;
-            color: #333;
-            line-height: 1.5;
-        }
         .btn-cancel {
             width: 100%;
             padding: 13px;
             border: none;
             border-radius: 8px;
-            background-color: #0d6efd;
+            background-color: #dc3545;
             color: white;
             font-size: 16px;
             font-weight: bold;
@@ -227,7 +258,7 @@ foreach ($appointments as $item) {
             gap: 8px;
         }
         .btn-cancel:hover {
-            background-color: #0b5ed7;
+            background-color: #bb2d3b;
         }
         .pending-request-box {
             border: 1px solid #dcdcdc;
@@ -272,7 +303,6 @@ foreach ($appointments as $item) {
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 0 20px;
         }
     </style>
 </head>
@@ -280,8 +310,20 @@ foreach ($appointments as $item) {
     <div class="container">
         <header>
             <div class="logo-container">
-                <img src="../images/icons/mediconnect.png" alt="MediConnect Logo">
-                 <button style="color: white; background-color: green; width: 80px; height: 30px; border: none; border-radius: 6px; cursor: pointer;" onclick="location.href='home.php'">Logout</button>
+                <a href="../index.php"><img src="../images/icons/mediconnect.png" alt="MediConnect Logo"></a>
+
+                <ul class="doc-nav">
+                    <li><a href="../index.php">Home</a></li>
+                    <li><a href="doctor_dashboard.php" class="active">Doctor Portal</a></li>
+                    <li><a href="../chat.php">Consultation Chat</a></li>
+                    <li><a href="../articles/news.php">Articles</a></li>
+                    <li><a href="../reviews/index.php">Reviews</a></li>
+                </ul>
+
+                <a href="../auth/logout.php" onclick="return confirm('Are you sure you want to log out?');"
+                   style="display:inline-flex; align-items:center; justify-content:center; color: white; background-color: #198754; padding: 8px 18px; text-decoration:none; border-radius: 6px; font-weight:bold; font-size:14px;">
+                   Logout
+                </a>
             </div>
         </header>
         
@@ -297,15 +339,15 @@ foreach ($appointments as $item) {
                 <div class="greeting">
                     <span>Welcome back</span>
                 </div>
-                <h2><?= htmlspecialchars($doctorInfo['full_name'] ?? 'Doctor') ?></h2>
+                <h2><?= htmlspecialchars($doctorInfo['full_name'] ?? ($_SESSION['full_name'] ?? 'Doctor')) ?></h2>
                 <p class="title"><?= htmlspecialchars($doctorInfo['specialty_name'] ?? 'Specialist') ?></p>
                 <p class="description">Your workspace is ready to manage patients.</p>
             </section>
 
             <!-- Main Title Section -->
             <section class="appointments-header">
-                <h2>Appointments & intake (<?= count($appointments) ?>)</h2>
-                <p>Approve or decline patient appointment requests.</p>
+                <h2>Appointments &amp; intake (<?= count($appointments) ?>)</h2>
+                <p>Approve or decline patient appointment requests, or start medical examination.</p>
             </section>
            
             <div class="appointments-grid">
@@ -315,13 +357,19 @@ foreach ($appointments as $item) {
                         $formattedTime = !empty($app['booking_time'])
                             ? date('d M Y - H:i:s', strtotime($app['booking_time']))
                             : 'Undefined';
+                        $patientUserId = (int)($app['patient_user_id'] ?? ($app['user_id'] ?? 0));
                         ?>
                         <article class="appointment-card">
                             <div class="patient-info">
                                 <span class="patient-name"><?= htmlspecialchars($app['patient_name'] ?? 'Patient') ?></span>
-                                <button type="button" class="btn-start" onclick="location.href='medical_examination.php?appointment_id=<?= (int)$app['appointment_id'] ?>'">
-                                    Start Consultation
-                                </button>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <?php if ($patientUserId > 0): ?>
+                                        <a href="../chat.php?partner_id=<?= $patientUserId ?>" class="btn-chat-link">💬 Chat</a>
+                                    <?php endif; ?>
+                                    <button type="button" class="btn-start" onclick="location.href='medical_examination.php?appointment_id=<?= (int)$app['appointment_id'] ?>'">
+                                        Start Consultation
+                                    </button>
+                                </div>
                             </div>
                             <div class="phone-info">
                                 <span>Phone: </span>
@@ -336,19 +384,14 @@ foreach ($appointments as $item) {
                                 <p class="date-time"><strong><?= $formattedTime ?></strong></p>
                             </div>                         
 
-                            <!-- <button type="button" class="btn-cancel" onclick="if(confirm('Bạn có chắc muốn hủy lịch hẹn này?')) location.href='cancel_appointment.php?id=<?= (int)$app['appointment_id'] ?>'">
-                                <span class="icon" style="display: inline-block; filter: brightness(0) invert(1)">🩺</span>
-                                Cancel appointment
-                            </button> -->
                             <?php if (in_array(strtoupper((string)$app['status']), ['PENDING', 'CONFIRMED'], true)): ?>
                                 <form method="POST" style="margin-top: auto;" onsubmit="return confirm('Bạn có chắc muốn hủy lịch hẹn này?');">
-                                <input type="hidden" name="action" value="update_status">
-                                <input type="hidden" name="appointment_id" value="<?= (int)$app['appointment_id'] ?>">
-                                <input type="hidden" name="status" value="CANCELLED">
-                                <button type="submit" class="btn-cancel">
-                                <span class="icon" style="display: inline-block; filter: brightness(0) invert(1)">🩺</span>
-                                Cancel appointment
-                                </button>
+                                    <input type="hidden" name="action" value="update_status">
+                                    <input type="hidden" name="appointment_id" value="<?= (int)$app['appointment_id'] ?>">
+                                    <input type="hidden" name="status" value="CANCELLED">
+                                    <button type="submit" class="btn-cancel">
+                                        Cancel appointment
+                                    </button>
                                 </form>
                             <?php endif; ?>
                         </article>
@@ -388,7 +431,7 @@ foreach ($appointments as $item) {
 
                         <table width="100%" border="0" cellpadding="8" cellspacing="0">
                             <tr valign="top">
-                                <!-- LEFT: PATIENT PERSONAL INFO (Lấy trực tiếp từ DB) -->
+                                <!-- LEFT: PATIENT PERSONAL INFO -->
                                 <td width="45%">
                                     <table width="100%" border="0" cellpadding="10" cellspacing="0">
                                         <tr>
@@ -414,9 +457,11 @@ foreach ($appointments as $item) {
                                     <table width="100%" border="0" cellpadding="10" cellspacing="0">
                                         <tr>
                                             <td style="background-color:white">
-                                                <h4>🩺 Symptoms & Booking Details</h4>
-                                                
+                                                <h4>🩺 Symptoms &amp; Booking Details</h4>
                                                 <p style="margin-bottom: 6px;"><strong>Schedule ID:</strong> #<?= htmlspecialchars((string)($req['schedule_id'] ?? 'N/A')) ?></p>
+                                                <?php if (!empty($req['symptoms_note'])): ?>
+                                                    <p style="margin-bottom: 6px;"><strong>Symptoms Note:</strong> <?= htmlspecialchars($req['symptoms_note']) ?></p>
+                                                <?php endif; ?>
                                                 <p><strong>Status:</strong> <span style="color:#d97706; font-weight:bold;"><?= htmlspecialchars($req['status'] ?? 'PENDING') ?></span></p>
                                             </td>
                                         </tr>
@@ -453,7 +498,7 @@ foreach ($appointments as $item) {
         <footer>
             <div>
                 <strong>MediConnect</strong>
-                <p>Clinic management & appointment booking</p>
+                <p>Clinic management &amp; appointment booking</p>
             </div>
             <small>© 2026 Mediconnect. All rights reserved.</small>
         </footer>

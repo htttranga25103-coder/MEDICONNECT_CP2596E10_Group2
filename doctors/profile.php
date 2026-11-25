@@ -587,11 +587,18 @@ try {
         <?php endif; ?>
 
         <div class="profile-actions">
+            <a href="index.php" class="back-button">&larr; Back to Doctor List</a>
 
-            <a href="index.php" class="back-button">
-                &larr; Back to Doctor List
-            </a>
-
+            <?php if ($error === ''): ?>
+                <?php
+                $bookHref = ($docNavRole === 'PATIENT')
+                    ? '../patient/book_appointment.php?doctor_id=' . (int)$doctor['doctor_id'] . '#booking-section'
+                    : '../auth/login.php';
+                ?>
+                <a href="<?= $bookHref ?>" class="back-button" style="background: #0f766e;">
+                    Book Appointment
+                </a>
+            <?php endif; ?>
         </div>
 
     </main>

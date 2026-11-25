@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id']) || strtoupper($_SESSION['role_name'] ?? '') !== 'ADMIN') {
+    header("Location: ../auth/login.php");
+    exit();
+}
+
 require_once __DIR__ . '/../models/admin_dashboard_class.php';
 
 $counts = AdminDashboard::getOverviewCounts();
@@ -28,15 +34,17 @@ $statusColors = [
     .layout-container { display: flex; min-height: 100vh; }
 
     /* SIDEBAR */
-    .sidebar { width: 200px; background-color: #4D6D7B; flex-shrink: 0; position: relative; }
+    .sidebar { width: 220px; background-color: #4D6D7B; flex-shrink: 0; position: relative; padding-top: 16px; }
+    .sidebar-logo { display: block; font-size: 24px; font-weight: bold; color: white; margin: 0 0 14px 20px; text-decoration: none; }
     .nav-list { list-style: none; margin-top: 10px; }
-    .nav-list a { display: block; padding: 12px 15px; text-decoration: none; color: white; }
+    .nav-list a { display: flex; align-items: center; gap: 8px; padding: 12px 15px; text-decoration: none; color: white; font-size: 14px; }
+    .nav-list a:hover { background: rgba(255,255,255,0.12); }
     .nav-list li.active { background: #eee; font-weight: bold; }
     .nav-list li.active a { color: #4D6D7B; }
 
     /* MAIN */
     .main-area { flex: 1; display: flex; flex-direction: column; padding: 15px 20px 0 30px; min-width: 0; }
-    .page-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 16px; font-weight: bold; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 16px; font-weight: bold; }
 
     /* STAT CARDS */
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
@@ -96,14 +104,16 @@ $statusColors = [
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <a style="font-size: 24px; color: white; margin-left: 30px">MediConnect</a>
+      <a href="../index.php" class="sidebar-logo">MediConnect</a>
       <ul class="nav-list">
-        <li class="active"><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/overview.png" width="30" height="30"> Overview</a></li>
-        <li><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/patient.png" width="30" height="30"> Patient management</a></li>
-        <li><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/doctor.png" width="30" height="30"> Doctor management</a></li>
-        <li><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/review.png" width="30" height="30"> City management</a></li>
-        <li><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/new.png" width="30" height="30"> News management</a></li>
-        <li><a href="#" style="display: inline-flex; align-items: center; gap: 6px;"><img src="../images/icons/comment.png" width="30" height="30"> Comment management</a></li>
+        <li class="active"><a href="admin_dashboard.php"><img src="../images/icons/overview.png" width="24" height="24" alt=""> Overview</a></li>
+        <li><a href="../index.php"><img src="../images/icons/overview.png" width="24" height="24" alt=""> Home Page</a></li>
+        <li><a href="../admin/manage_patients.php"><img src="../images/icons/patient.png" width="24" height="24" alt=""> Manage Patients</a></li>
+        <li><a href="../doctors/admin.php"><img src="../images/icons/doctor.png" width="24" height="24" alt=""> Manage Doctors</a></li>
+        <li><a href="../reviews/index.php"><img src="../images/icons/review.png" width="24" height="24" alt=""> Reviews Doctor</a></li>
+        <li><a href="../articles/manage.php"><img src="../images/icons/new.png" width="24" height="24" alt=""> Manage Articles</a></li>
+        <li><a href="../articles/news.php"><img src="../images/icons/comment.png" width="24" height="24" alt=""> Articles &amp; Comments</a></li>
+        <li><a href="../locations/index.php"><img src="../images/icons/review.png" width="24" height="24" alt=""> Manage Locations</a></li>
       </ul>
     </aside>
 
@@ -111,15 +121,18 @@ $statusColors = [
     <main class="main-area">
 
       <div class="page-header">
-        <span>Admin Dashboard</span>
-        <button style="color: white; margin-right: 40px; background-color: green; width: 80px; height: 30px; border: none; border-radius: 6px; cursor: pointer;" onclick="location.href='medical_examination.php'">Logout</button>
+        <span>Admin Dashboard — Welcome, <?= $e($_SESSION['full_name'] ?? 'Admin') ?></span>
+        <a href="../auth/logout.php" onclick="return confirm('Are you sure you want to log out?');"
+           style="display:inline-flex; align-items:center; justify-content:center; color: white; margin-right: 20px; background-color: #198754; padding: 7px 18px; text-decoration:none; border-radius: 6px; font-size:14px;">
+           Logout
+        </a>
       </div>
 
       <!-- 3 THẺ SỐ LIỆU TỪ DATABASE -->
       <section class="stats-grid">
         <div class="stat-card">
           <div class="stat-left">
-            <span><img src="../images/icons/pending.png" width="30" height="30"></span>
+            <span><img src="../images/icons/pending.png" width="30" height="30" alt=""></span>
             <span>Number of doctor accounts:</span>
           </div>
           <span class="stat-number"><?= number_format($counts['doctors']) ?></span>
@@ -127,7 +140,7 @@ $statusColors = [
 
         <div class="stat-card1">
           <div class="stat-left">
-            <span><img src="../images/icons/doctors.png" width="30" height="30"></span>
+            <span><img src="../images/icons/doctors.png" width="30" height="30" alt=""></span>
             <span>Number of patient accounts:</span>
           </div>
           <span class="stat-number"><?= number_format($counts['patients']) ?></span>
@@ -135,7 +148,7 @@ $statusColors = [
 
         <div class="stat-card2">
           <div class="stat-left">
-            <span><img src="../images/icons/patients.png" width="30" height="30"></span>
+            <span><img src="../images/icons/patients.png" width="30" height="30" alt=""></span>
             <span>Number of articles:</span>
           </div>
           <span class="stat-number"><?= number_format($counts['articles']) ?></span>
@@ -226,7 +239,7 @@ $statusColors = [
       <footer>
         <div>
           <strong>MediConnect</strong>
-          <p>Clinic management & appointment booking</p>
+          <p>Clinic management &amp; appointment booking</p>
         </div>
         <small>© 2026 Mediconnect. All rights reserved.</small>
       </footer>
