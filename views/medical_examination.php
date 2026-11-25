@@ -113,7 +113,7 @@ $isNewVisit = empty($otherVisits);
                 <tr>
                     <td align="left">
                         <h2><?= $e($profile['full_name']) ?></h2>
-                        <p>📞 <?= $e($profile['phone_number'] ?: 'Chưa cập nhật') ?> | ✉️ <?= $e($profile['email'] ?: 'Not yet updated') ?></p>
+                        <p>📞 <?= $e($profile['phone_number'] ?: 'Not yet updated') ?> | ✉️ <?= $e($profile['email'] ?: 'Not yet updated') ?></p>
                     </td>
                     <td width="500" align="left">
                         <table width="100%" border="0" cellpadding="3">
