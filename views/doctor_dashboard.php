@@ -307,26 +307,25 @@ foreach ($appointments as $item) {
                 <h2>Appointments & intake (<?= count($appointments) ?>)</h2>
                 <p>Approve or decline patient appointment requests.</p>
             </section>
-
-            <!-- Lưới danh sách lịch hẹn từ Database -->
+           
             <div class="appointments-grid">
                 <?php if (!empty($appointments)): ?>
                     <?php foreach ($appointments as $app): ?>
                         <?php
                         $formattedTime = !empty($app['booking_time'])
                             ? date('d M Y - H:i:s', strtotime($app['booking_time']))
-                            : 'Chưa xác định';
+                            : 'Undefined';
                         ?>
                         <article class="appointment-card">
                             <div class="patient-info">
-                                <span class="patient-name"><?= htmlspecialchars($app['patient_name'] ?? 'Bệnh nhân') ?></span>
+                                <span class="patient-name"><?= htmlspecialchars($app['patient_name'] ?? 'Patient') ?></span>
                                 <button type="button" class="btn-start" onclick="location.href='medical_examination.php?appointment_id=<?= (int)$app['appointment_id'] ?>'">
                                     Start Consultation
                                 </button>
                             </div>
                             <div class="phone-info">
                                 <span>Phone: </span>
-                                <strong><?= htmlspecialchars($app['patient_phone'] ?? 'Chưa cập nhật') ?></strong>
+                                <strong><?= htmlspecialchars($app['patient_phone'] ?? 'Not yet updated') ?></strong>
                             </div>
 
                             <div class="appointment-time">
@@ -359,7 +358,7 @@ foreach ($appointments as $item) {
                 <?php endif; ?>
             </div>
 
-            <!-- PENDING APPOINTMENT REQUESTS TỪ CƠ SỞ DỮ LIỆU -->
+            <!-- PENDING APPOINTMENT REQUESTS-->
             <section>
                 <table width="100%" border="1" cellpadding="12" cellspacing="0">
                     <tr>
@@ -447,7 +446,7 @@ foreach ($appointments as $item) {
                     </fieldset>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p style="color: #666; padding: 16px 0;">Hiện tại không có yêu cầu đặt lịch nào đang chờ duyệt (PENDING).</p>
+                <p style="color: #666; padding: 16px 0;">There are currently no appointment requests awaiting approval (PENDING).</p>
             <?php endif; ?>
         </main>
 
