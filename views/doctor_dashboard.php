@@ -1,10 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../models/doctor_dashboard_class.php';
-
-// Lấy doctor_id từ session khi bác sĩ đăng nhập (tạm gán = 1 để test dữ liệu)
 $doctor_id = $_SESSION['doctor_id'] ?? 1;
-
 $flashMessage = '';
 $flashType = 'success';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
