@@ -7,8 +7,6 @@ $doctor_id = $_SESSION['doctor_id'] ?? 1;
 
 $flashMessage = '';
 $flashType = 'success';
-
-// Xử lý duyệt / từ chối lịch hẹn
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     $appointmentIdPost = (int)($_POST['appointment_id'] ?? 0);
     $newStatusPost = strtoupper(trim((string)($_POST['status'] ?? '')));
@@ -21,12 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $flashType = 'error';
     }
 }
-
-// Gọi dữ liệu từ database (đã JOIN bảng patients nên có sẵn cột gender)
 $doctorInfo = DoctorDashboard::getDoctorInfo($doctor_id);
-$appointments = DoctorDashboard::getDoctorAppointments($doctor_id) ?: [];
-
-// Lọc danh sách lịch hẹn PENDING từ cơ sở dữ liệu
+$allAppointments = DoctorDashboard::getDoctorAppointments($doctor_id) ?: [];
+$appointments = array_values(array_filter($allAppointments, function ($a) {
+    return strtoupper(trim((string)($a['status'] ?? ''))) !== 'CANCELLED';
+}));
 $pendingAppointments = [];
 foreach ($appointments as $item) {
     if (strtoupper(trim((string)($item['status'] ?? ''))) === 'PENDING') {
@@ -88,7 +85,6 @@ foreach ($appointments as $item) {
             color: #842029;
             border: 1px solid #f5c2c7;
         }
-
         .welcome-banner {
             background: linear-gradient(135deg, #198754 0%, #146c43 100%);
             border-radius: 16px;
@@ -97,7 +93,6 @@ foreach ($appointments as $item) {
             margin-bottom: 36px;
             box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
         }
-
         .greeting {
             display: flex;
             justify-content: space-between;
@@ -106,12 +101,10 @@ foreach ($appointments as $item) {
             opacity: 0.9;
             margin-bottom: 8px;
         }
-
         .welcome-banner h2 {
             font-size: 32px;
             margin-bottom: 8px;
         }
-
         .welcome-banner .title {
             display: inline-block;
             background-color: rgba(255, 255, 255, 0.2);
@@ -121,37 +114,31 @@ foreach ($appointments as $item) {
             font-weight: bold;
             margin-bottom: 10px;
         }
-
         .welcome-banner .description {
             font-size: 15px;
             opacity: 0.95;
         }
-
         .appointments-header {
             background-color: transparent;
             padding-bottom: 14px;
             border-bottom: 1px solid #eee;
             margin-bottom: 24px;
         }
-
         .appointments-header h2 {
             font-size: 26px;
             color: #111;
             margin-bottom: 6px;
         }
-
         .appointments-header p {
             color: #666;
             font-size: 15px;
         }
-
         .appointments-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
             gap: 24px;
             margin-bottom: 40px;
         }
-
         .appointment-card {
             border: 1px solid #e0e0e0;
             border-radius: 14px;
@@ -162,20 +149,17 @@ foreach ($appointments as $item) {
             gap: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
-
         .patient-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
         }
-
         .patient-name {
             font-weight: bold;
             font-size: 22px;
             color: #111;
         }
-
         .btn-start {
             font-size: 15px;
             font-weight: bold;
@@ -189,12 +173,10 @@ foreach ($appointments as $item) {
         .btn-start:hover {
             background-color: #0b5ed7;
         }
-
         .phone-info {
             font-size: 16px;
             color: #555;
         }
-
         .appointment-time {
             display: flex;
             justify-content: space-between;
@@ -205,14 +187,12 @@ foreach ($appointments as $item) {
             border-radius: 8px;
             font-size: 16px;
         }
-
         .appointment-time .time-label {
             display: flex;
             align-items: center;
             gap: 8px;
             font-weight: bold;
         }
-
         .reason-section {
             border-radius: 10px;
             background-color: #f8f9fa;
@@ -220,7 +200,6 @@ foreach ($appointments as $item) {
             padding: 16px 18px;
             flex: 1;
         }
-
         .reason-section .label {
             display: block;
             font-size: 13px;
@@ -229,13 +208,11 @@ foreach ($appointments as $item) {
             text-transform: uppercase;
             margin-bottom: 8px;
         }
-
         .reason-section p {
             font-size: 16px;
             color: #333;
             line-height: 1.5;
         }
-
         .btn-cancel {
             width: 100%;
             padding: 13px;
@@ -255,7 +232,6 @@ foreach ($appointments as $item) {
         .btn-cancel:hover {
             background-color: #0b5ed7;
         }
-
         .pending-request-box {
             border: 1px solid #dcdcdc;
             border-radius: 12px;
@@ -285,7 +261,6 @@ foreach ($appointments as $item) {
             font-weight: bold;
             cursor: pointer;
         }
-
         footer {
             margin-top: 60px;
             padding-top: 30px;
@@ -312,7 +287,7 @@ foreach ($appointments as $item) {
                  <button style="color: white; background-color: green; width: 80px; height: 30px; border: none; border-radius: 6px; cursor: pointer;" onclick="location.href='home.php'">Logout</button>
             </div>
         </header>
-
+        
         <main>
             <?php if ($flashMessage !== ''): ?>
                 <div class="flash-box <?= $flashType === 'success' ? 'flash-success' : 'flash-error' ?>">
@@ -365,10 +340,21 @@ foreach ($appointments as $item) {
                                 <p class="date-time"><strong><?= $formattedTime ?></strong></p>
                             </div>                         
 
-                            <button type="button" class="btn-cancel" onclick="if(confirm('Bạn có chắc muốn hủy lịch hẹn này?')) location.href='cancel_appointment.php?id=<?= (int)$app['appointment_id'] ?>'">
+                            <!-- <button type="button" class="btn-cancel" onclick="if(confirm('Bạn có chắc muốn hủy lịch hẹn này?')) location.href='cancel_appointment.php?id=<?= (int)$app['appointment_id'] ?>'">
                                 <span class="icon" style="display: inline-block; filter: brightness(0) invert(1)">🩺</span>
                                 Cancel appointment
-                            </button>
+                            </button> -->
+                            <?php if (in_array(strtoupper((string)$app['status']), ['PENDING', 'CONFIRMED'], true)): ?>
+                                <form method="POST" style="margin-top: auto;" onsubmit="return confirm('Bạn có chắc muốn hủy lịch hẹn này?');">
+                                <input type="hidden" name="action" value="update_status">
+                                <input type="hidden" name="appointment_id" value="<?= (int)$app['appointment_id'] ?>">
+                                <input type="hidden" name="status" value="CANCELLED">
+                                <button type="submit" class="btn-cancel">
+                                <span class="icon" style="display: inline-block; filter: brightness(0) invert(1)">🩺</span>
+                                Cancel appointment
+                                </button>
+                                </form>
+                            <?php endif; ?>
                         </article>
                     <?php endforeach; ?>
                 <?php else: ?>
