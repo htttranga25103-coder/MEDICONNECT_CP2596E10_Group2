@@ -141,8 +141,7 @@ $statusColors = [
           <span class="stat-number"><?= number_format($counts['articles']) ?></span>
         </div>
       </section>
-
-      <!-- HÀNG 1: TRẠNG THÁI LỊCH HẸN + LỊCH HẸN MỚI NHẤT -->
+      
       <section class="panels-grid">
         <div class="panel">
           <div class="panel-title">📊 Appointments by status (<?= $totalAppointments ?>)</div>
@@ -182,12 +181,11 @@ $statusColors = [
               <?php endforeach; ?>
             </table>
           <?php else: ?>
-            <p class="empty">Chưa có lịch hẹn nào.</p>
+            <p class="empty">No appointments yet.</p>
           <?php endif; ?>
         </div>
       </section>
-
-      <!-- HÀNG 2: TOP BÁC SĨ + QUICK OVERVIEW -->
+      
       <section class="panels-grid">
         <div class="panel">
           <div class="panel-title">🏆 Top doctors by appointments</div>
@@ -207,7 +205,7 @@ $statusColors = [
               <?php endforeach; ?>
             </table>
           <?php else: ?>
-            <p class="empty">Chưa có bác sĩ nào.</p>
+            <p class="empty">There are no doctors yet.</p>
           <?php endif; ?>
         </div>
 
