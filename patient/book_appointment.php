@@ -55,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'book'
         'keyword'           => !empty($_POST['keyword']) ? trim($_POST['keyword']) : null,
         'page'              => !empty($_POST['page']) && (int)$_POST['page'] > 1 ? (int)$_POST['page'] : null,
         'doctor_id'         => !empty($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : null,
+        'work_date'         => !empty($_POST['work_date']) ? trim($_POST['work_date']) : null,
     ]);
 
     $redirectUrl = "book_appointment.php" . (!empty($redirectParams) ? "?" . http_build_query($redirectParams) : "");

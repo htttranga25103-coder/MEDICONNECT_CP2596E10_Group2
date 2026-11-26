@@ -18,7 +18,6 @@ $articles = Doctor::getLatestArticles();
     <link rel="stylesheet" href="assets/css/patient_booking.css?v=2">
     <link rel="stylesheet" href="assets/css/article_style.css?v=2">
     <link rel="stylesheet" href="assets/css/home_style.css?v=3">
-    
 </head>
 <body>
     <!-- Thanh điều hướng phân quyền -->
@@ -34,7 +33,7 @@ $articles = Doctor::getLatestArticles();
                     <li><a href="admin/manage_patients.php">Manage Patients</a></li>
 
                     <li class="nav-dropdown">
-                        <a href="doctors/admin.php">Manage Doctors &#9662;</a>
+                        <a href="doctors/admin.php">Manage Doctors ▾</a>
                         <ul class="nav-dropdown-menu">
                             <li><a href="doctors/admin.php">Doctors &amp; Approval</a></li>
                             <li><a href="doctors/index.php">Doctors List (Public)</a></li>
@@ -44,7 +43,7 @@ $articles = Doctor::getLatestArticles();
                     </li>
 
                     <li class="nav-dropdown">
-                        <a href="articles/manage.php">Manage Articles &#9662;</a>
+                        <a href="articles/manage.php">Manage Articles ▾</a>
                         <ul class="nav-dropdown-menu">
                             <li><a href="articles/manage.php">Add / Edit / Delete Articles</a></li>
                             <li><a href="articles/news.php">All Articles &amp; Comments</a></li>
@@ -74,20 +73,21 @@ $articles = Doctor::getLatestArticles();
                 <?php endif; ?>
             </ul>
 
-        <div class="nav-user">
-            <?php if ($isLoggedIn): ?>
-                <div class="user-dropdown">
-                    <a href="auth/profile.php" class="user-trigger">
-                        <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong> &#9662;</span>
-                    </a>
-                    <ul class="user-dropdown-menu">
-                        <li><a href="auth/profile.php">My Profile</a></li>
-                    </ul>
-                </div>
-                <a href="auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
-            <?php else: ?>
-                <a href="auth/login.php" class="btn-logout-patient btn-login-nav">Log in</a>
-            <?php endif; ?>
+            <div class="nav-user">
+                <?php if ($isLoggedIn): ?>
+                    <div class="user-dropdown">
+                        <a href="auth/profile.php" class="user-trigger">
+                            <span>Hello, <strong><?= htmlspecialchars($_SESSION['full_name'] ?? 'User') ?></strong> ▾</span>
+                        </a>
+                        <ul class="user-dropdown-menu">
+                            <li><a href="auth/profile.php">My Profile</a></li>
+                        </ul>
+                    </div>
+                    <a href="auth/logout.php" class="btn-logout-patient" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
+                <?php else: ?>
+                    <a href="auth/login.php" class="btn-logout-patient btn-login-nav">Log in</a>
+                <?php endif; ?>
+            </div>
         </div>
     </nav>
 
@@ -126,14 +126,24 @@ $articles = Doctor::getLatestArticles();
                 <div class="horizontal-grid">
                 <?php foreach ($doctors as $doc): ?>
                 <?php
-                $doctorId = (int)$doc['doctor_id'];
+                $doctorId   = (int)$doc['doctor_id'];
                 $profileUrl = 'doctors/profile.php?id=' . $doctorId;
-                $bookUrl = ($isLoggedIn && $roleName === 'PATIENT')
+                $bookUrl    = ($isLoggedIn && $roleName === 'PATIENT')
                     ? 'patient/book_appointment.php?doctor_id=' . $doctorId . '#booking-section'
                     : 'auth/login.php';
-                $avatarSrc = !empty($doc['avatar_url'])
-                    ? 'assets/images/' . htmlspecialchars($doc['avatar_url'])
-                    : 'assets/images/default_avatar.png';
+
+                $rawAvatar  = trim((string)($doc['avatar_url'] ?? ''));
+                $baseAvatar = basename($rawAvatar);
+
+                if ($rawAvatar !== '' && preg_match('#^https?://#i', $rawAvatar) === 1) {
+                    $avatarSrc = htmlspecialchars($rawAvatar, ENT_QUOTES, 'UTF-8');
+                } elseif ($baseAvatar !== '' && is_file(__DIR__ . '/assets/images/' . $baseAvatar)) {
+                    $avatarSrc = 'assets/images/' . htmlspecialchars($baseAvatar, ENT_QUOTES, 'UTF-8');
+                } elseif ($baseAvatar !== '' && is_file(__DIR__ . '/uploads/avatars/' . $baseAvatar)) {
+                    $avatarSrc = 'uploads/avatars/' . htmlspecialchars($baseAvatar, ENT_QUOTES, 'UTF-8');
+                } else {
+                    $avatarSrc = 'assets/images/default_avatar.png';
+                }
                 ?>
                 <div class="doctor-card">
                     <a href="<?= $profileUrl ?>">
@@ -150,13 +160,12 @@ $articles = Doctor::getLatestArticles();
                         <button class="btn-teal" style="flex: 1; margin-top: 0;" onclick="location.href='<?= $bookUrl ?>'">Book now</button>
                     </div>
                 </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
                 </div>
             <?php else: ?>
                 <div class="article-card article-card-empty">No doctor data.</div>
             <?php endif; ?>
         </section>
-
         <!-- HEALTH INSIGHTS -->
         <section class="home-section">
             <div class="section-bar">
