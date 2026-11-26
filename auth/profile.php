@@ -217,6 +217,60 @@ $isStaff = in_array($role, ['ADMIN', 'DOCTOR'], true);
     <title>My Profile - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/article_style.css">
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=5">
+    <style>
+    .patient-navbar .navbar-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 24px;
+    }
+
+    .patient-navbar .brand-logo {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .patient-navbar .nav-links {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .patient-navbar .nav-links > li {
+        flex-shrink: 0;
+    }
+
+    .patient-navbar .nav-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        padding: 8px 14px;
+        border-radius: 8px;
+        line-height: 1.2;
+        width: auto;
+        height: auto;
+    }
+
+    .patient-navbar .nav-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .patient-navbar .nav-user span {
+        white-space: nowrap;
+    }
+</style>
 </head>
 <body>
 <?php if ($isStaff): ?>

@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/../config/connection.php';
 
-class DoctorDashboard {   
-    public static $lastError = '';    
+class DoctorDashboard {
+    public static $lastError = '';
+
     public static function getDoctorInfo($doctor_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -47,8 +48,8 @@ class DoctorDashboard {
                 a.symptoms_note,
                 p.date_of_birth,
                 p.gender,
-                
                 p.address,
+                u.user_id AS patient_user_id,
                 u.full_name AS patient_name,
                 u.phone_number AS patient_phone,
                 u.email AS patient_email
@@ -111,51 +112,52 @@ class DoctorDashboard {
 
         $conn->close();
         return $profile;
-    }    
-    public static function getPatientVisitHistory($patient_id, $exclude_appointment_id = 0) {
-    $conn = Connection::Connectdb();
-    $conn->set_charset("utf8mb4");
-
-    $patient_id = (int)$patient_id;
-    $exclude_appointment_id = (int)$exclude_appointment_id;
-
-    $sql = "
-        SELECT 
-            mr.record_id,
-            mr.appointment_id,
-            mr.diagnosis,
-            mr.treatment_plan,
-            mr.doctor_notes,
-            mr.created_at,
-            a.booking_time,
-            COALESCE(TIMESTAMP(ds.work_date, ds.start_time), a.booking_time) AS scheduled_time,
-            ds.end_time AS schedule_end_time,
-            a.status,
-            a.symptoms_note,
-            u_doc.full_name AS doctor_name
-        FROM medical_records mr
-        JOIN appointments a ON mr.appointment_id = a.appointment_id
-        LEFT JOIN doctor_schedules ds ON a.schedule_id = ds.schedule_id
-        JOIN doctors d ON mr.doctor_id = d.doctor_id
-        JOIN users u_doc ON d.user_id = u_doc.user_id
-        WHERE mr.patient_id = $patient_id
-          AND mr.appointment_id != $exclude_appointment_id
-        ORDER BY mr.created_at DESC, mr.record_id DESC
-    ";
-
-    $result = $conn->query($sql);
-    $history = [];
-
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $history[] = $row;
-        }
     }
 
-    $conn->close();
-    return $history;
-}
-   
+    public static function getPatientVisitHistory($patient_id, $exclude_appointment_id = 0) {
+        $conn = Connection::Connectdb();
+        $conn->set_charset("utf8mb4");
+
+        $patient_id = (int)$patient_id;
+        $exclude_appointment_id = (int)$exclude_appointment_id;
+
+        $sql = "
+            SELECT 
+                mr.record_id,
+                mr.appointment_id,
+                mr.diagnosis,
+                mr.treatment_plan,
+                mr.doctor_notes,
+                mr.created_at,
+                a.booking_time,
+                COALESCE(TIMESTAMP(ds.work_date, ds.start_time), a.booking_time) AS scheduled_time,
+                ds.end_time AS schedule_end_time,
+                a.status,
+                a.symptoms_note,
+                u_doc.full_name AS doctor_name
+            FROM medical_records mr
+            JOIN appointments a ON mr.appointment_id = a.appointment_id
+            LEFT JOIN doctor_schedules ds ON a.schedule_id = ds.schedule_id
+            JOIN doctors d ON mr.doctor_id = d.doctor_id
+            JOIN users u_doc ON d.user_id = u_doc.user_id
+            WHERE mr.patient_id = $patient_id
+              AND mr.appointment_id != $exclude_appointment_id
+            ORDER BY mr.created_at DESC, mr.record_id DESC
+        ";
+
+        $result = $conn->query($sql);
+        $history = [];
+
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $history[] = $row;
+            }
+        }
+
+        $conn->close();
+        return $history;
+    }
+
     public static function updatePatientGender($patient_id, $gender) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -194,7 +196,6 @@ class DoctorDashboard {
         return $updated;
     }
 
-    
     public static function updateAppointmentStatus($appointment_id, $doctor_id, $status) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -227,7 +228,6 @@ class DoctorDashboard {
         return $updated;
     }
 
-    
     public static function getMedicalRecordByAppointment($appointment_id) {
         $conn = Connection::Connectdb();
         $conn->set_charset("utf8mb4");
@@ -246,7 +246,8 @@ class DoctorDashboard {
 
         $conn->close();
         return $record;
-    }    
+    }
+
     private static function ensureMedicalRecordsAllowMultiple($conn) {
         static $checked = false;
         if ($checked) {
@@ -280,7 +281,7 @@ class DoctorDashboard {
             error_log('ensureMedicalRecordsAllowMultiple failed: ' . $e->getMessage());
         }
     }
-    
+
     public static function saveMedicalRecord($appointment_id, $doctor_id, $diagnosis, $treatment_plan, $doctor_notes) {
         $appointment_id = (int)$appointment_id;
         $doctor_id = (int)$doctor_id;
@@ -298,7 +299,7 @@ class DoctorDashboard {
         self::ensureMedicalRecordsAllowMultiple($conn);
 
         try {
-            $conn->begin_transaction();            
+            $conn->begin_transaction();
             $stmt = $conn->prepare("SELECT patient_id FROM appointments WHERE appointment_id = ? AND doctor_id = ? LIMIT 1");
             $stmt->bind_param("ii", $appointment_id, $doctor_id);
             $stmt->execute();
@@ -308,7 +309,7 @@ class DoctorDashboard {
             if (!$appt) {
                 throw new Exception('Appointment not found for this doctor');
             }
-            $patient_id = (int)$appt['patient_id'];          
+            $patient_id = (int)$appt['patient_id'];
             $stmt = $conn->prepare("
                 INSERT INTO medical_records
                     (appointment_id, patient_id, doctor_id, diagnosis, treatment_plan, doctor_notes, created_at, updated_at)
@@ -316,7 +317,7 @@ class DoctorDashboard {
             ");
             $stmt->bind_param("iiisss", $appointment_id, $patient_id, $doctor_id, $diagnosis, $treatment_plan, $doctor_notes);
             $stmt->execute();
-            $stmt->close();           
+            $stmt->close();
             $stmt = $conn->prepare("
                 UPDATE appointments
                 SET status = 'COMPLETED', updated_at = NOW()
