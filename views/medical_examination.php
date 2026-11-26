@@ -78,7 +78,13 @@ $formNotes = $_POST['symptoms'] ?? ($profile['symptoms_note'] ?? '');
 $e = fn($v) => htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8');
 
 $patientCode = 'BN-' . date('Y', strtotime($profile['booking_time'] ?: 'now')) . '-' . str_pad((string)$profile['patient_id'], 4, '0', STR_PAD_LEFT);
-$appointmentTime = !empty($profile['booking_time']) ? date('d M Y - H:i', strtotime($profile['booking_time'])) : 'Undetermined';
+$appointmentTime = 'Undetermined';
+if (!empty($profile['scheduled_time'])) {
+    $appointmentTime = date('d M Y, H:i', strtotime($profile['scheduled_time']));
+    if (!empty($profile['schedule_end_time'])) {
+        $appointmentTime .= ' – ' . date('H:i', strtotime($profile['schedule_end_time']));
+    }
+}
 $otherVisits = array_filter($history, fn($h) => (int)$h['appointment_id'] !== $appointment_id);
 $isNewVisit = empty($otherVisits);
 ?>
@@ -118,7 +124,11 @@ $isNewVisit = empty($otherVisits);
                     <a href="doctor_dashboard.php"><img src="../images/icons/mediconnect.png" alt="MediConnect"></a>
                 </td>
                 <td align="right">
+<<<<<<< HEAD
                     <a href="doctor_dashboard.php" class="btn-back">← Back to Dashboard</a>
+=======
+                    <a href="./doctor_dashboard.php" style="text-decoration:none">🛴Return</a>
+>>>>>>> origin/home-admindashboard-doctordashboard
                     <span>● <strong>Dr. <?= $e($doctorInfo['full_name'] ?? 'Doctor') ?></strong> (<?= $e($doctorInfo['specialty_name'] ?? 'Specialist') ?>)</span>
                 </td>
             </tr>
@@ -214,12 +224,13 @@ $isNewVisit = empty($otherVisits);
                         </table>
                     </div>
                     <br>
-
+                   
                     <!-- 3. MEDICAL HISTORY -->
                     <div class="history">
                         <h3>3. Medical History</h3>
                         <br>
                         <?php if (!empty($history)): ?>
+<<<<<<< HEAD
                             <?php foreach ($history as $h): ?>
                                 <table width="100%" border="1" cellpadding="10" cellspacing="0">
                                     <tr>
@@ -246,10 +257,47 @@ $isNewVisit = empty($otherVisits);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <p style="color:#666;">The patient has no prior medical history.</p>
+=======
+                        <?php foreach ($history as $h): ?>
+                        <?php
+                            $visitTime = 'Undetermined';
+                            if (!empty($h['scheduled_time'])) {
+                            $visitTime = date('d M Y, H:i', strtotime($h['scheduled_time']));
+                            if (!empty($h['schedule_end_time'])) {
+                            $visitTime .= ' – ' . date('H:i', strtotime($h['schedule_end_time']));
+                                }
+                            }
+                        ?>
+                        <table width="100%" border="1" cellpadding="10" cellspacing="0">
+                        <tr>
+                        <td>
+                        <table width="100%" border="0">
+                            <tr>
+                                <td align="left"><mark><?= $e($visitTime) ?></mark></td>
+                                <td align="right"><small><?= (int)$h['appointment_id'] === $appointment_id ? '<mark>Current visit</mark> ' : '' ?>Dr. <?= $e($h['doctor_name']) ?></small></td>
+                            </tr>
+                        </table>
+                        <p><strong>Diagnosis: <?= !empty($h['diagnosis']) ? $e($h['diagnosis']) : 'No diagnosis yet (' . $e($h['status']) . ')' ?></strong></p>
+                        <p><small><?= !empty($h['doctor_notes']) ? $e($h['doctor_notes']) : (!empty($h['symptoms_note']) ? $e($h['symptoms_note']) : 'No symptoms noted.') ?></small></p>
+                        <?php if (!empty($h['treatment_plan'])): ?>
+                            <table width="100%" border="1" cellpadding="5" cellspacing="0">
+                                <tr>
+                                    <td><small><strong>Prescribed Medication:</strong><br><?= nl2br($e($h['treatment_plan'])) ?></small></td>
+                                </tr>
+                            </table>
+>>>>>>> origin/home-admindashboard-doctordashboard
                         <?php endif; ?>
-                    </div>
+                    </td>
+                </tr>
+            </table>
+            <br>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p style="color:#666;">The patient has no prior medical history.</p>
+    <?php endif; ?>
+</div>
+                    
                 </td>
-
                 <td width="2%">&nbsp;</td>
 
                 <!-- ================= RIGHT COLUMN ================= -->

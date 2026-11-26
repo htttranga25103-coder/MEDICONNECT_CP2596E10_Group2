@@ -36,12 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 $doctorInfo = DoctorDashboard::getDoctorInfo($doctor_id);
 $allAppointments = DoctorDashboard::getDoctorAppointments($doctor_id) ?: [];
+
 $appointments = array_values(array_filter($allAppointments, function ($a) {
-    return strtoupper(trim((string)($a['status'] ?? ''))) !== 'CANCELLED';
+    return strtoupper(trim((string)($a['status'] ?? ''))) === 'CONFIRMED';
 }));
 
 $pendingAppointments = [];
-foreach ($appointments as $item) {
+foreach ($allAppointments as $item) {
     if (strtoupper(trim((string)($item['status'] ?? ''))) === 'PENDING') {
         $pendingAppointments[] = $item;
     }
@@ -52,10 +53,262 @@ foreach ($appointments as $item) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Doctor Portal - MediConnect</title>
     <link rel="stylesheet" href="../assets/css/patient_booking.css?v=2">
     <link rel="stylesheet" href="../assets/css/article_style.css?v=2">
     <link rel="stylesheet" href="../assets/css/home_style.css?v=5">
+=======
+    <title>MediConnect - Doctor Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            min-height: 100vh;
+            padding: 0 40px 50px 40px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+
+        .flash-box {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            font-weight: bold;
+        }
+        .flash-success {
+            background-color: #e8f5e9;
+            color: #146c43;
+            border: 1px solid #badbcc;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+        .welcome-banner {
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            border-radius: 16px;
+            padding: 32px 40px;
+            color: white;
+            margin-bottom: 36px;
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+        }
+        .greeting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .welcome-banner h2 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .welcome-banner .title {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .welcome-banner .description {
+            font-size: 15px;
+            opacity: 0.95;
+        }
+        .appointments-header {
+            background-color: transparent;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 24px;
+        }
+        .appointments-header h2 {
+            font-size: 26px;
+            color: #111;
+            margin-bottom: 6px;
+        }
+        .appointments-header p {
+            color: #666;
+            font-size: 15px;
+        }
+        .appointments-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 40px;
+        }
+        @media (max-width: 900px) {
+            .appointments-grid {
+            grid-template-columns: 1fr;
+            }
+        }
+        .appointment-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 14px;
+            padding: 28px 32px;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            min-width: 0;
+        }
+        .patient-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .patient-name {
+            font-weight: bold;
+            font-size: 22px;
+            color: #111;
+        }
+        .btn-start {
+            font-size: 15px;
+            font-weight: bold;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 20px;
+            cursor: pointer;
+        }
+        .btn-start:hover {
+            background-color: #0b5ed7;
+        }
+        .phone-info {
+            font-size: 16px;
+            color: #555;
+        }
+        .appointment-time {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e8f5e9;
+            color: #198754;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .appointment-time .time-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+        .reason-section {
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 16px 18px;
+            flex: 1;
+        }
+        .reason-section .label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .reason-section p {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .btn-cancel {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background-color: #0d6efd;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-cancel:hover {
+            background-color: #0b5ed7;
+        }
+        .pending-request-box {
+            border: 1px solid #dcdcdc;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 24px;
+            background-color: #fff;
+        }
+        .pending-request-box legend {
+            padding: 0 10px;
+            color: #198754;
+        }
+        .btn-decline {
+            background-color: #6c757d;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-approve {
+            background-color: #198754;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 22px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 20px;
+        }
+    </style>
+>>>>>>> origin/home-admindashboard-doctordashboard
 </head>
 <body>
     <nav class="patient-navbar">
@@ -113,10 +366,20 @@ foreach ($appointments as $item) {
                 <div class="appointments-grid">
                     <?php foreach ($appointments as $app): ?>
                         <?php
+<<<<<<< HEAD
                         $formattedTime = !empty($app['booking_time'])
                             ? date('d M Y - H:i:s', strtotime($app['booking_time']))
                             : 'Undefined';
                         $patientUserId = (int)($app['patient_user_id'] ?? ($app['user_id'] ?? 0));
+=======
+                        $formattedTime = 'Undetermined';
+                        if (!empty($app['scheduled_time'])) {
+                        $formattedTime = date('d M Y, H:i', strtotime($app['scheduled_time']));
+                        if (!empty($app['schedule_end_time'])) {
+                        $formattedTime .= ' – ' . date('H:i', strtotime($app['schedule_end_time']));
+                            }
+                        }
+>>>>>>> origin/home-admindashboard-doctordashboard
                         ?>
                         <article class="appointment-card">
                             <div class="patient-info">
@@ -172,9 +435,13 @@ foreach ($appointments as $item) {
                 <?php foreach ($pendingAppointments as $req): ?>
                     <?php
                     $reqId = (int)$req['appointment_id'];
-                    $scheduledTime = !empty($req['booking_time'])
-                        ? date('d M Y - H:i:s', strtotime($req['booking_time']))
-                        : 'Chưa xác định';
+                    $scheduledTime = 'Undetermined';
+                    if (!empty($req['scheduled_time'])) {
+                    $scheduledTime = date('d M Y, H:i', strtotime($req['scheduled_time']));
+                    if (!empty($req['schedule_end_time'])) {
+                    $scheduledTime .= ' – ' . date('H:i', strtotime($req['schedule_end_time']));
+                        }
+                    }
                     $genderVal = trim((string)($req['gender'] ?? ''));
                     ?>
                     <div class="pending-request-card">
